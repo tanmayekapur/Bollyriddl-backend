@@ -11,24 +11,48 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Environment Variables
+environ.Env.read_env(BASE_DIR / ".env")
+env = environ.Env(
+    SECRET_KEY=(str, ""),
+    DEBUG=(bool, True),
+    ALLOWED_HOSTS=(list, []),
+    SECURE_SSL_REDIRECT=(bool, False),
+    SESSION_COOKIE_SECURE=(bool, False),
+    CSRF_COOKIE_SECURE=(bool, False),
+    CORS_ALLOW_CREDENTIALS=(bool, False),
+    CORS_ORIGIN_ALLOW_ALL=(bool, False),
+    CORS_ORIGIN_WHITELIST=(list, []),
+    API_BASE_URL=(str, ""),
+)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-#i0tzn8%*a&&eh)3!=e5oko8v^68^gtlx*79bpbuyrc#c^rdg)"
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 
 # Application definition
+
+DEFAULT_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -37,17 +61,22 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # apps
-    # third party apps
-    "rest_framework",
+]
+
+THIRD_PARTY_APPS = [
     "corsheaders",
+    "django_cleanup",
+    "django_filters",
+    "rest_framework",
+    "drf_standardized_errors",
 ]
 
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Replace with your frontend's domain
+LOCAL_APPS = [
+    "movie",
 ]
-CORS_ALLOW_CREDENTIALS = True
+
+INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 
 MIDDLEWARE = [
@@ -129,9 +158,45 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = "/static/"
+STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "media/"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Django CORS Headers Settings
+CORS_ALLOW_CREDENTIALS = env("CORS_ALLOW_CREDENTIALS")
+CORS_ORIGIN_ALLOW_ALL = env("CORS_ORIGIN_ALLOW_ALL")
+CORS_ORIGIN_WHITELIST = env("CORS_ORIGIN_WHITELIST")
+
+
+# API Base URL
+API_BASE_URL = env("API_BASE_URL")
+
+
+# Rest Framework Settings
+DEFAULT_RENDERER_CLASSES = [
+    "backend.renderers.APIRenderer",
+]
+
+if DEBUG:
+    DEFAULT_RENDERER_CLASSES = DEFAULT_RENDERER_CLASSES + [
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_RENDERER_CLASSES": DEFAULT_RENDERER_CLASSES,
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+}
