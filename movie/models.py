@@ -122,3 +122,11 @@ class Movie(models.Model):
         self.name = self.name.title()
         self.imdb_id = self.imdb_id.lower()
         super().save(*args, **kwargs)
+
+
+class Archive(models.Model):
+    date = models.DateField("Date", unique=True)
+    movie = models.ForeignKey(Movie, verbose_name="Movie", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Archive - {self.movie}"
