@@ -65,6 +65,7 @@ INSTALLED_APPS = [
 
 THIRD_PARTY_APPS = [
     "corsheaders",
+    "import_export",
     "django_cleanup",
     "django_filters",
     "rest_framework",
