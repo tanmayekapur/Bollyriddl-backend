@@ -20,10 +20,11 @@ from django.contrib import admin
 from django.conf import settings
 
 from rest_framework import routers
-from movie.views import MovieViewSet
+from movie.views import MovieViewSet, ContactViewSet
 
 router = routers.DefaultRouter()
 router.register(r"movies", MovieViewSet)
+router.register(r"contact", ContactViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

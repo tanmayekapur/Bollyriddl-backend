@@ -9,6 +9,7 @@ from .models import (
     ProductionHouse,
     Movie,
     Archive,
+    Contact,
 )
 
 # Register your models here.
@@ -71,3 +72,19 @@ class ArchiveAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display_links = list_display
     search_fields = ("date", "movie__name")
     autocomplete_fields = ("movie",)
+
+
+@admin.register(Contact)
+class ContactAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ("id", "name", "email", "short_subject")
+    list_display_links = list_display
+    search_fields = ("name", "email", "subject")
+
+    def short_subject(self, obj):
+        max_length = 50
+        if len(obj.subject) > max_length:
+            return obj.subject[:max_length] + "..."
+        else:
+            return obj.subject
+
+    short_subject.short_description = "subject"

@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 import datetime
 
-from .serializers import MovieSerializer
-from .models import Movie, Archive
+from .serializers import MovieSerializer, ContactSerializer
+from .models import Movie, Archive, Contact
 
 # Create your views here.
 
@@ -128,3 +128,10 @@ class MovieViewSet(viewsets.ModelViewSet):
                 data.pop("music_directors")
 
             return Response(data, status=200)
+
+
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["post", "head"]

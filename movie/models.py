@@ -130,3 +130,13 @@ class Archive(models.Model):
 
     def __str__(self):
         return f"Archive - {self.movie}"
+
+
+class Contact(models.Model):
+    name = models.CharField("Name", max_length=255)
+    email = models.EmailField("Email", max_length=255)
+    subject = models.CharField("Subject", max_length=255)
+    message = models.TextField("Message")
+
+    def __str__(self):
+        return self.name
