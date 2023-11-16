@@ -1,5 +1,8 @@
 from import_export.admin import ImportExportMixin
-from django.contrib import admin
+from django.contrib import admin, messages
+import datetime
+import random
+
 from .models import (
     Genre,
     Cast,
@@ -66,6 +69,21 @@ class MovieAdmin(ImportExportMixin, admin.ModelAdmin):
     search_fields = ("name", "imdb_id", "director__name")
     filter_horizontal = ("genres", "cast", "writers", "music_directors")
     autocomplete_fields = ("director", "production_house")
+    actions = ("set_mystery_movie",)
+
+    @admin.action(description="Set mystery movie for today")
+    def set_mystery_movie(self, request, queryset):
+        today = datetime.date.today()
+        if Archive.objects.filter(date=today).exists():
+            self.message_user(
+                request, "Mystery movie is already set for today.", messages.WARNING
+            )
+        else:
+            mystery_movie = random.choice(list(queryset))
+            Archive.objects.create(movie=mystery_movie, date=today)
+            self.message_user(
+                request, "Mystery movie is set for today.", messages.SUCCESS
+            )
 
 
 @admin.register(Archive)
