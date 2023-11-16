@@ -3,8 +3,13 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 import datetime
 
-from .serializers import MovieSerializer, ContactSerializer
-from .models import Movie, Archive, Contact
+from .serializers import (
+    MovieSerializer,
+    ContactSerializer,
+    FeedbackSerializer,
+    FeedbackSubjectSerializer,
+)
+from .models import Movie, Archive, Contact, Feedback, FeedbackSubject
 
 # Create your views here.
 
@@ -135,3 +140,20 @@ class ContactViewSet(viewsets.ModelViewSet):
     serializer_class = ContactSerializer
     permission_classes = [permissions.AllowAny]
     http_method_names = ["post", "head"]
+
+
+class FeedbackViewSet(viewsets.ModelViewSet):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["post", "head"]
+
+
+class FeedbackSubjectViewSet(viewsets.ModelViewSet):
+    queryset = FeedbackSubject.objects.all()
+    serializer_class = FeedbackSubjectSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    http_method_names = ["get", "head"]
+
+    def get_object(self):
+        raise exceptions.NotFound("Not found.", "not_found")

@@ -10,6 +10,8 @@ from .models import (
     Movie,
     Archive,
     Contact,
+    Feedback,
+    FeedbackSubject,
 )
 
 # Register your models here.
@@ -88,3 +90,23 @@ class ContactAdmin(ImportExportMixin, admin.ModelAdmin):
             return obj.subject
 
     short_subject.short_description = "subject"
+
+
+@admin.register(Feedback)
+class FeedbackAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ("id", "email", "subjects_list")
+    list_display_links = list_display
+    search_fields = ("email", "subjects__name")
+    filter_horizontal = ("subjects",)
+
+    def subjects_list(self, obj):
+        return ", ".join([subject.name for subject in obj.subjects.all()])
+
+    subjects_list.short_description = "subjects"
+
+
+@admin.register(FeedbackSubject)
+class FeedbackSubjectAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ("id", "name")
+    list_display_links = list_display
+    search_fields = ("name",)

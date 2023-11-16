@@ -140,3 +140,28 @@ class Contact(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class FeedbackSubject(models.Model):
+    name = models.CharField("Name", unique=True, max_length=255)
+
+    def __str__(self):
+        return self.name
+
+    def validate_unique(self, exclude):
+        self.name = self.name.title()
+        return super().validate_unique(exclude)
+
+    def save(self, *args, **kwargs):
+        self.name = self.name.title()
+        super().save(*args, **kwargs)
+
+
+class Feedback(models.Model):
+    subjects = models.ManyToManyField(FeedbackSubject, verbose_name="Subjects")
+    email = models.EmailField("Email", max_length=255)
+    message = models.TextField("Message")
+
+    def __str__(self):
+        subjects = ", ".join([subject.name for subject in self.subjects.all()])
+        return f"{self.email} - {subjects}"

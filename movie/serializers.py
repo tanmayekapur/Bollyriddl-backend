@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Movie, Contact
+from .models import Movie, Contact, Feedback, FeedbackSubject
 
 
 class MovieSerializer(serializers.ModelSerializer):
@@ -18,4 +18,16 @@ class MovieSerializer(serializers.ModelSerializer):
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
+        fields = "__all__"
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = "__all__"
+
+
+class FeedbackSubjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeedbackSubject
         fields = "__all__"
