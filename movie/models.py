@@ -100,14 +100,12 @@ class Movie(models.Model):
     genres = models.ManyToManyField(Genre, verbose_name="Genres")
     cast = models.ManyToManyField(Cast, verbose_name="Cast")
     writers = models.ManyToManyField(Writer, verbose_name="Writers")
-    director = models.ForeignKey(
-        Director, verbose_name="Director", on_delete=models.CASCADE
-    )
+    directors = models.ManyToManyField(Director, verbose_name="Directors")
     music_directors = models.ManyToManyField(
         MusicDirector, verbose_name="Music Directors"
     )
-    production_house = models.ForeignKey(
-        ProductionHouse, verbose_name="Production House", on_delete=models.CASCADE
+    production_houses = models.ManyToManyField(
+        ProductionHouse, verbose_name="Production Houses"
     )
 
     def __str__(self):

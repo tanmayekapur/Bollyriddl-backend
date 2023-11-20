@@ -20,6 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(BASE_DIR / ".env")
 env = environ.Env(
     SECRET_KEY=(str, ""),
+    AES_KEY=(str, ""),
     DEBUG=(bool, True),
     ALLOWED_HOSTS=(list, []),
     SECURE_SSL_REDIRECT=(bool, False),
@@ -36,6 +37,7 @@ env = environ.Env(
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
+AES_KEY = env("AES_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")

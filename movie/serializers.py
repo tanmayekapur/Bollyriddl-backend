@@ -1,18 +1,37 @@
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
 from .models import Movie, Contact, Feedback, FeedbackSubject
 
 
 class MovieSerializer(serializers.ModelSerializer):
-    director = serializers.StringRelatedField()
-    production_house = serializers.StringRelatedField()
-    genres = serializers.StringRelatedField(many=True)
-    cast = serializers.StringRelatedField(many=True)
-    writers = serializers.StringRelatedField(many=True)
-    music_directors = serializers.StringRelatedField(many=True)
-
     class Meta:
         model = Movie
-        exclude = ("id", "imdb_id")
+        fields = "__all__"
+        exclude = None
+        depth = 1
+
+    def __init__(self, *args, **kwargs):
+        context = kwargs.get("context", {})
+        view = context.get("view", None)
+
+        if view is not None:
+            if view.action == "list":
+                self.Meta.fields = ("id", "name")
+                self.Meta.exclude = None
+
+            elif view.action == "retrieve":
+                raise exceptions.NotFound("Not found.", "not_found")
+
+            elif view.action == "get_mystery_movie":
+                self.Meta.fields = None
+                self.Meta.exclude = ("name", "imdb_id")
+                self.Meta.depth = 0
+
+            elif view.action == "match_mystery_movie":
+                self.Meta.fields = None
+                self.Meta.exclude = ("imdb_id",)
+                self.Meta.depth = 1
+
+        super().__init__(*args, **kwargs)
 
 
 class ContactSerializer(serializers.ModelSerializer):

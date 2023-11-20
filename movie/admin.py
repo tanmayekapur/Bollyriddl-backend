@@ -64,11 +64,17 @@ class ProductionHouseAdmin(ImportExportMixin, admin.ModelAdmin):
 
 @admin.register(Movie)
 class MovieAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ("id", "name", "year", "director")
+    list_display = ("id", "name", "year")
     list_display_links = list_display
-    search_fields = ("name", "imdb_id", "director__name")
-    filter_horizontal = ("genres", "cast", "writers", "music_directors")
-    autocomplete_fields = ("director", "production_house")
+    search_fields = ("name", "imdb_id", "year")
+    filter_horizontal = (
+        "genres",
+        "cast",
+        "writers",
+        "directors",
+        "music_directors",
+        "production_houses",
+    )
     actions = ("set_mystery_movie",)
 
     @admin.action(description="Set mystery movie for today")
