@@ -22,6 +22,12 @@ class MovieViewSet(viewsets.ModelViewSet):
     search_fields = ["name"]
     ordering_fields = ["name"]
 
+    def get_object(self):
+        if self.action == "get_hint":
+            self.queryset = Archive.objects.all()
+
+        return super().get_object()
+
     @action(
         detail=False,
         methods=["get"],
@@ -53,6 +59,53 @@ class MovieViewSet(viewsets.ModelViewSet):
             data["id"] = mystery_movie.id
             return Response(data, status=200)
 
+        else:
+            raise exceptions.NotFound("Not found.", "not_found")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="get-hint",
+        name="Get Hint",
+    )
+    def get_hint(self, request, *args, **kwargs):
+        movie = self.get_object().movie
+        id = request.query_params.get("id")
+        key = request.query_params.get("key")
+        keys = [
+            "genres",
+            "cast",
+            "writers",
+            "directors",
+            "music_directors",
+            "production_houses",
+        ]
+
+        validation_errors = {}
+
+        if not id:
+            validation_errors["id"] = ["This field may not be blank."]
+
+        if not key:
+            validation_errors["key"] = ["This field may not be blank."]
+
+        if validation_errors:
+            raise exceptions.ValidationError(validation_errors, "blank")
+
+        try:
+            id = int(id)
+        except Exception:
+            validation_errors["id"] = ["'id' value must be an integer."]
+
+        if key not in keys:
+            validation_errors["key"] = [f"'key' value must be one of: {keys}"]
+
+        if validation_errors:
+            raise exceptions.ValidationError(validation_errors, "invalid")
+
+        if getattr(movie, key).filter(id=id).exists():
+            value = getattr(movie, key).get(id=id)
+            return Response(value.name, status=200)
         else:
             raise exceptions.NotFound("Not found.", "not_found")
 
