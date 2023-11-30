@@ -1,5 +1,6 @@
 from import_export.admin import ImportExportMixin
 from django.contrib import admin, messages
+from .mixins import MovieResource
 import datetime
 import random
 
@@ -76,6 +77,7 @@ class MovieAdmin(ImportExportMixin, admin.ModelAdmin):
         "production_houses",
     )
     actions = ("set_mystery_movie",)
+    resource_class = MovieResource
 
     @admin.action(description="Set mystery movie for today")
     def set_mystery_movie(self, request, queryset):
