@@ -30,8 +30,25 @@ class MovieViewSet(viewsets.ModelViewSet):
     )
     def get_mystery_movie(self, request):
         today = datetime.date.today()
-        if Archive.objects.filter(date=today).exists():
-            mystery_movie = Archive.objects.get(date=today)
+        date = request.query_params.get("date")
+
+        if date:
+            try:
+                date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+            except Exception:
+                raise exceptions.ValidationError(
+                    {
+                        "date": [
+                            f"'{date}' value has an invalid date format. It must be in YYYY-MM-DD format."
+                        ]
+                    },
+                    "invalid",
+                )
+        else:
+            date = today
+
+        if Archive.objects.filter(date=date).exists():
+            mystery_movie = Archive.objects.get(date=date)
             data = self.get_serializer(mystery_movie.movie).data
             data["id"] = mystery_movie.id
             return Response(data, status=200)
