@@ -150,11 +150,13 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if guessed_movie == mystery_movie.movie:
             data["message"] = "Movie matched."
+            data["matched"] = True
             return Response(data, status=200)
 
         else:
             mystery_movie_data = self.get_serializer(mystery_movie.movie).data
             data["message"] = "Movie not matched."
+            data["matched"] = False
             common_data = {}
 
             for key, value in data.items():
