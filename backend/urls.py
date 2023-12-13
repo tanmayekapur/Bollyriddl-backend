@@ -25,6 +25,8 @@ from movie.views import (
     ContactViewSet,
     FeedbackViewSet,
     FeedbackSubjectViewSet,
+    UserViewSet,
+    UserActivityViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -32,6 +34,8 @@ router.register(r"movies", MovieViewSet)
 router.register(r"contact", ContactViewSet)
 router.register(r"feedback", FeedbackViewSet)
 router.register(r"feedback-subjects", FeedbackSubjectViewSet)
+router.register(r"user", UserViewSet)
+router.register(r"user-activity", UserActivityViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

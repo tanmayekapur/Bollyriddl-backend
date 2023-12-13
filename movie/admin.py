@@ -1,3 +1,4 @@
+from django.http.request import HttpRequest
 from import_export.admin import ImportExportMixin
 from django.contrib import admin, messages
 from .mixins import MovieResource
@@ -16,6 +17,8 @@ from .models import (
     Contact,
     Feedback,
     FeedbackSubject,
+    Guess,
+    UserActivity,
 )
 
 # Register your models here.
@@ -136,3 +139,38 @@ class FeedbackSubjectAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ("id", "name")
     list_display_links = list_display
     search_fields = ("name",)
+
+
+class GuessInline(admin.TabularInline):
+    model = Guess
+    extra = 0
+    max_num = 0
+    can_delete = False
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = [field.name for field in self.model._meta.fields]
+        readonly_fields.remove("id")
+        return readonly_fields
+
+
+@admin.register(UserActivity)
+class UserActivityAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ("id", "user", "total_time", "guessed_movies_count")
+    list_display_links = list_display
+    search_fields = ("user__uuid",)
+    readonly_fields = ("guessed_movies_count", "total_time")
+    inlines = [GuessInline]
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = [field.name for field in self.model._meta.fields]
+        readonly_fields.remove("id")
+        return readonly_fields + list(self.readonly_fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

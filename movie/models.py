@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 
 # Create your models here.
 
@@ -163,3 +164,42 @@ class Feedback(models.Model):
     def __str__(self):
         subjects = ", ".join([subject.name for subject in self.subjects.all()])
         return f"{self.email} - {subjects}"
+
+
+class User(models.Model):
+    uuid = models.UUIDField("User ID", default=uuid.uuid4, unique=True, editable=False)
+
+    def __str__(self):
+        return str(self.uuid)
+
+
+class Guess(models.Model):
+    user_activity = models.ForeignKey("UserActivity", on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
+    time_taken = models.DurationField("Time Taken")
+
+    def __str__(self):
+        return f"{self.movie} - {self.time_taken}"
+
+    class Meta:
+        verbose_name_plural = "guesses"
+
+
+class UserActivity(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    guessed_movies = models.ManyToManyField(
+        Movie, through=Guess, verbose_name="Guessed Movies"
+    )
+    start_time = models.DateTimeField("Start Time")
+    end_time = models.DateTimeField("End Time")
+
+    @property
+    def guessed_movies_count(self):
+        return self.guessed_movies.count()
+
+    @property
+    def total_time(self):
+        return self.end_time - self.start_time
+
+    class Meta:
+        verbose_name_plural = "user activities"

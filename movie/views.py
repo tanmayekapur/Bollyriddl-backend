@@ -8,8 +8,18 @@ from .serializers import (
     ContactSerializer,
     FeedbackSerializer,
     FeedbackSubjectSerializer,
+    UserSerializer,
+    UserActivitySerializer,
 )
-from .models import Movie, Archive, Contact, Feedback, FeedbackSubject
+from .models import (
+    Movie,
+    Archive,
+    Contact,
+    Feedback,
+    FeedbackSubject,
+    User,
+    UserActivity,
+)
 
 # Create your views here.
 
@@ -194,3 +204,34 @@ class FeedbackSubjectViewSet(viewsets.ModelViewSet):
 
     def get_object(self):
         raise exceptions.NotFound("Not found.", "not_found")
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    http_method_names = ["get", "head"]
+
+    def get_queryset(self):
+        raise exceptions.NotFound("Not found.", "not_found")
+
+    def get_object(self):
+        raise exceptions.NotFound("Not found.", "not_found")
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="create-user",
+        name="Create User",
+    )
+    def create_user(self, request):
+        user = User.objects.create()
+        data = self.get_serializer(user).data
+        return Response(data, status=200)
+
+
+class UserActivityViewSet(viewsets.ModelViewSet):
+    queryset = UserActivity.objects.all()
+    serializer_class = UserActivitySerializer
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["post", "head"]
