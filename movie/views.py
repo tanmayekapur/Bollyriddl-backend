@@ -29,7 +29,8 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "head"]
-    search_fields = ["name"]
+    search_size = 10
+    search_fields = ["^name", "name"]
     ordering_fields = ["name"]
 
     def get_object(self):
@@ -37,6 +38,14 @@ class MovieViewSet(viewsets.ModelViewSet):
             self.queryset = Archive.objects.all()
 
         return super().get_object()
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+
+        if self.action == "list":
+            return queryset[: self.search_size]
+
+        return queryset
 
     @action(
         detail=False,
