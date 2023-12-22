@@ -1,4 +1,4 @@
-from django.http.request import HttpRequest
+from sortedm2m_filter_horizontal_widget.forms import SortedFilteredSelectMultiple
 from import_export.admin import ImportExportMixin
 from django.contrib import admin, messages
 from .mixins import MovieResource
@@ -82,6 +82,11 @@ class MovieAdmin(ImportExportMixin, admin.ModelAdmin):
     actions = ("set_mystery_movie",)
     resource_class = MovieResource
 
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if db_field.name in self.filter_horizontal:
+            kwargs["widget"] = SortedFilteredSelectMultiple()
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
     @admin.action(description="Set mystery movie for today")
     def set_mystery_movie(self, request, queryset):
         today = datetime.date.today()
@@ -127,6 +132,11 @@ class FeedbackAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display_links = list_display
     search_fields = ("email", "subjects__name")
     filter_horizontal = ("subjects",)
+
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        if db_field.name in self.filter_horizontal:
+            kwargs["widget"] = SortedFilteredSelectMultiple()
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def subjects_list(self, obj):
         return ", ".join([subject.name for subject in obj.subjects.all()])

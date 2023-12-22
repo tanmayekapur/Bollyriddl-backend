@@ -24,7 +24,8 @@ class RelatedResourceMixin(ModelResource):
                     related_object = related_model.objects.get_or_create(name=name)[0]
                     related_objects.append(related_object)
 
-            getattr(obj, field_name).set(related_objects)
+            for rel_obj in related_objects:
+                getattr(obj, field_name).add(rel_obj)
 
         else:
             # Use the default behavior for other fields

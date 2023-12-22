@@ -1,3 +1,4 @@
+from sortedm2m.fields import SortedManyToManyField
 from django.db import models
 import uuid
 
@@ -98,14 +99,14 @@ class Movie(models.Model):
     name = models.CharField("Name", unique=True, max_length=255)
     imdb_id = models.CharField("IMDB ID", unique=True, max_length=255)
     year = models.IntegerField("Year of Release", default=0)
-    genres = models.ManyToManyField(Genre, verbose_name="Genres")
-    cast = models.ManyToManyField(Cast, verbose_name="Cast")
-    writers = models.ManyToManyField(Writer, verbose_name="Writers")
-    directors = models.ManyToManyField(Director, verbose_name="Directors")
-    music_directors = models.ManyToManyField(
+    genres = SortedManyToManyField(Genre, verbose_name="Genres")
+    cast = SortedManyToManyField(Cast, verbose_name="Cast")
+    writers = SortedManyToManyField(Writer, verbose_name="Writers")
+    directors = SortedManyToManyField(Director, verbose_name="Directors")
+    music_directors = SortedManyToManyField(
         MusicDirector, verbose_name="Music Directors"
     )
-    production_houses = models.ManyToManyField(
+    production_houses = SortedManyToManyField(
         ProductionHouse, verbose_name="Production Houses"
     )
 
@@ -157,7 +158,7 @@ class FeedbackSubject(models.Model):
 
 
 class Feedback(models.Model):
-    subjects = models.ManyToManyField(FeedbackSubject, verbose_name="Subjects")
+    subjects = SortedManyToManyField(FeedbackSubject, verbose_name="Subjects")
     email = models.EmailField("Email", max_length=255)
     message = models.TextField("Message")
 
@@ -174,9 +175,12 @@ class User(models.Model):
 
 
 class Guess(models.Model):
+    _sort_field_name = "order"
+
     user_activity = models.ForeignKey("UserActivity", on_delete=models.CASCADE)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     time_taken = models.DurationField("Time Taken")
+    order = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.movie} - {self.time_taken}"
@@ -187,8 +191,11 @@ class Guess(models.Model):
 
 class UserActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    guessed_movies = models.ManyToManyField(
-        Movie, through=Guess, verbose_name="Guessed Movies"
+    guessed_movies = SortedManyToManyField(
+        Movie,
+        through=Guess,
+        verbose_name="Guessed Movies",
+        sort_value_field_name="order",
     )
     start_time = models.DateTimeField("Start Time")
     end_time = models.DateTimeField("End Time")

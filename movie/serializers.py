@@ -92,14 +92,17 @@ class UserActivitySerializer(serializers.ModelSerializer):
         repr["total_time"] = str(instance.total_time)
         repr["guessed_movies_count"] = instance.guessed_movies_count
         repr["guessed_movies"] = []
-        for guessed_movie in instance.guessed_movies.all():
-            guesses = instance.guessed_movies.through.objects.filter(
-                user_activity=instance, movie=guessed_movie
-            )
+        guessed_movies = (
+            Guess.objects.filter(user_activity=instance)
+            .prefetch_related("movie")
+            .order_by("order")
+        )
+        for guessed_movie in guessed_movies.all():
             repr["guessed_movies"].append(
                 {
-                    "movie": guessed_movie.id,
-                    "time_taken": str(guesses.first().time_taken),
+                    "movie": guessed_movie.movie.id,
+                    "time_taken": str(guessed_movie.time_taken),
+                    "order": guessed_movie.order,
                 }
             )
         return repr
@@ -107,6 +110,8 @@ class UserActivitySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         guessed_movies = validated_data.pop("guessed_movies")
         user_activity = UserActivity.objects.create(**validated_data)
-        for guessed_movie in guessed_movies:
-            Guess.objects.create(user_activity=user_activity, **guessed_movie)
+        for order, guessed_movie in enumerate(guessed_movies):
+            Guess.objects.create(
+                user_activity=user_activity, order=order, **guessed_movie
+            )
         return user_activity

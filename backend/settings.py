@@ -66,12 +66,14 @@ INSTALLED_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "sortedm2m",
     "corsheaders",
     "import_export",
     "django_cleanup",
     "django_filters",
     "rest_framework",
     "drf_standardized_errors",
+    "sortedm2m_filter_horizontal_widget",
 ]
 
 
