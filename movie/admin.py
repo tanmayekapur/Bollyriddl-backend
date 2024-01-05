@@ -1,7 +1,7 @@
 from sortedm2m_filter_horizontal_widget.forms import SortedFilteredSelectMultiple
 from import_export.admin import ImportExportMixin
+from .mixins import MovieResource, AnalyticsMixin
 from django.contrib import admin, messages
-from .mixins import MovieResource
 import datetime
 import random
 
@@ -156,19 +156,21 @@ class GuessInline(admin.TabularInline):
     extra = 0
     max_num = 0
     can_delete = False
-
-    def get_readonly_fields(self, request, obj=None):
-        readonly_fields = [field.name for field in self.model._meta.fields]
-        readonly_fields.remove("id")
-        return readonly_fields
+    exclude = ("id", "order")
 
 
 @admin.register(UserActivity)
-class UserActivityAdmin(ImportExportMixin, admin.ModelAdmin):
-    list_display = ("id", "user", "total_time", "guessed_movies_count")
+class UserActivityAdmin(AnalyticsMixin, ImportExportMixin, admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "total_time",
+        "guessed_movies_count",
+        "winner_display",
+    )
     list_display_links = list_display
     search_fields = ("user__uuid",)
-    readonly_fields = ("guessed_movies_count", "total_time")
+    readonly_fields = ("guessed_movies_count", "total_time", "winner_display")
     inlines = [GuessInline]
 
     def get_readonly_fields(self, request, obj=None):
@@ -184,3 +186,9 @@ class UserActivityAdmin(ImportExportMixin, admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def winner_display(self, obj):
+        return obj.winner
+
+    winner_display.boolean = True
+    winner_display.short_description = "winner"

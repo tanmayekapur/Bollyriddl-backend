@@ -23,7 +23,7 @@ class MovieSerializer(serializers.ModelSerializer):
 
             elif view.action == "get_mystery_movie":
                 self.Meta.fields = None
-                self.Meta.exclude = ("name", "imdb_id")
+                self.Meta.exclude = ("imdb_id",)
                 self.Meta.depth = 0
 
             elif view.action == "match_mystery_movie":

@@ -1,0 +1,204 @@
+{% extends "admin/import_export/base.html" %}
+{% load i18n %}
+{% load admin_urls %}
+{% load import_export_tags %}
+{% load static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "import_export/import.css" %}" />{% endblock %}
+
+{% block breadcrumbs_last %}
+{% trans "Analytics" %}
+{% endblock %}
+
+{% block content %}
+{% if today_analytics %}
+  <h2> Today's Analytics </h2>
+  <p>
+    <ul>
+      {% if today_analytics.movie %}
+      <li>{{ today_analytics.movie }} movie is guessed <strong>{{ today_analytics.guess_count }}</strong> times.</li>
+      {% endif %}
+
+      {% if today_analytics.time_taken.0 %}
+      <li>Minimum Time Taken - <strong>{{ today_analytics.time_taken.0 }}</strong></li>
+      {% endif %}
+
+      {% if today_analytics.time_taken.1 %}
+      <li>Mean Time Taken - <strong>{{ today_analytics.time_taken.0 }}</strong></li>
+      {% endif %}
+
+      {% if today_analytics.time_taken.2 %}
+      <li>Median Time Taken - <strong>{{ today_analytics.time_taken.0 }}</strong></li>
+      {% endif %}
+
+      {% if today_analytics.guesses_count.0 %}
+      <li>Minimum Guesses - <strong>{{ today_analytics.guesses_count.0 }}</strong></li>
+      {% endif %}
+
+      {% if today_analytics.guesses_count.1 %}
+      <li>Mean Guesses - <strong>{{ today_analytics.guesses_count.1 }}</strong></li>
+      {% endif %}
+
+      {% if today_analytics.guesses_count.2 %}
+      <li>Median Guesses - <strong>{{ today_analytics.guesses_count.2 }}</strong></li>
+      {% endif %}
+
+      {% if today_analytics.min_max_movies_by_date.1 %}
+        <li>Most guessed movie(s):
+          <ul>
+            {% for movie in today_analytics.min_max_movies_by_date.1 %}
+            <li>{{ movie }}</li>
+            {% endfor %}
+          </ul>
+        </li>
+        {% endif %}
+
+        {% if today_analytics.min_max_movies_by_date.0 %}
+        <li>Least guessed movie(s):
+          <ul>
+            {% for movie in today_analytics.min_max_movies_by_date.0 %}
+              <li>{{ movie }}</li>
+            {% endfor %}
+          </ul>
+        </li>
+      {% endif %}
+
+      {% if today_analytics.min_max_movies_by_trial.1 %}
+          <li>Most guessed movie(s) at trial {{ today_analytics.trial }}:
+            <ul>
+              {% for movie in today_analytics.min_max_movies_by_trial.1 %}
+              <li>{{ movie }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+          {% endif %}
+
+          {% if today_analytics.min_max_movies_by_trial.0 %}
+          <li>Least guessed movie(s) at trial {{ today_analytics.trial }}:
+            <ul>
+              {% for movie in today_analytics.min_max_movies_by_trial.0 %}
+                <li>{{ movie }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+          {% endif %}
+    </ul>
+  </p>
+  <hr>
+{% endif %}
+
+{% block analytics_form %}
+    <form action="" method="post">
+      {% csrf_token %}
+
+      {% block fields_help %}
+        <h2>
+          {% trans "Choose your criteria to get analytics accordingly: " %}
+        </h2>
+      {% endblock %}
+
+      {% block form_detail %}
+          <fieldset class="module aligned">
+          {% for field in form %}
+            <div class="form-row">
+              {{ field.errors }}
+
+              {{ field.label_tag }}
+
+              {{ field }}
+
+              {% if field.field.help_text %}
+              <p class="help">{{ field.field.help_text|safe }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </fieldset>
+      {% endblock %}
+
+      {% block form_submit_button %}
+        <div class="submit-row">
+          <input type="submit" class="default" value="{% trans "Submit" %}">
+        </div>
+      {% endblock %}
+    </form>
+    {% endblock %}
+
+    {% if analytics_data %}
+    <div>
+      <h2>
+        Analytics data for {{ analytics_data.movie }}  movie, {{ analytics_data.guesses }} guesses, {{analytics_data.trial }} trial(s) and {{ analytics_data.date }} date.
+      </h2>
+      <p>
+        <ul>
+          <li>{{ analytics_data.movie }} movie is guessed <strong>{{ analytics_data.guess_count }}</strong> times.</li>
+
+          {% if analytics_data.time_taken.0 %}
+          <li>Minimum Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
+          {% endif %}
+
+          {% if analytics_data.time_taken.1 %}
+          <li>Mean Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
+          {% endif %}
+
+          {% if analytics_data.time_taken.2 %}
+          <li>Median Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
+          {% endif %}
+
+          {% if analytics_data.guesses_count.0 %}
+          <li>Minimum Guesses - <strong>{{ analytics_data.guesses_count.0 }}</strong></li>
+          {% endif %}
+
+          {% if analytics_data.guesses_count.1 %}
+          <li>Mean Guesses - <strong>{{ analytics_data.guesses_count.1 }}</strong></li>
+          {% endif %}
+
+          {% if analytics_data.guesses_count.2 %}
+          <li>Median Guesses - <strong>{{ analytics_data.guesses_count.2 }}</strong></li>
+          {% endif %}
+
+          {% if analytics_data.min_max_movies_by_date.1 %}
+          <li>Most guessed movie(s) on {{ analytics_data.date }}:
+            <ul>
+              {% for movie in analytics_data.min_max_movies_by_date.1 %}
+              <li>{{ movie }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+          {% endif %}
+
+          {% if analytics_data.min_max_movies_by_date.0 %}
+          <li>Least guessed movie(s) on {{ analytics_data.date }}:
+            <ul>
+              {% for movie in analytics_data.min_max_movies_by_date.0 %}
+                <li>{{ movie }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+          {% endif %}
+
+          {% if analytics_data.min_max_movies_by_trial.1 %}
+          <li>Most guessed movie(s) at trial {{ analytics_data.trial }}:
+            <ul>
+              {% for movie in analytics_data.min_max_movies_by_trial.1 %}
+              <li>{{ movie }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+          {% endif %}
+
+          {% if analytics_data.min_max_movies_by_trial.0 %}
+          <li>Least guessed movie(s) at trial {{ analytics_data.trial }}:
+            <ul>
+              {% for movie in analytics_data.min_max_movies_by_trial.0 %}
+                <li>{{ movie }}</li>
+              {% endfor %}
+            </ul>
+          </li>
+          {% endif %}
+
+        </ul>
+      </p>
+    </div>
+  {% endif %}
+
+{% endblock %}

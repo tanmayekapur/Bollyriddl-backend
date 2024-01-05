@@ -208,5 +208,13 @@ class UserActivity(models.Model):
     def total_time(self):
         return self.end_time - self.start_time
 
+    @property
+    def winner(self):
+        if Archive.objects.filter(date=self.start_time.date()).exists():
+            mystery_movie = Archive.objects.get(date=self.start_time.date()).movie
+            if self.guess_set.last().movie.id == mystery_movie.id:
+                return True
+        return False
+
     class Meta:
         verbose_name_plural = "user activities"
