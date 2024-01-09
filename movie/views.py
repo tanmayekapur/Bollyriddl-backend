@@ -1,8 +1,10 @@
 from rest_framework import viewsets, permissions, exceptions
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.decorators import action
 import datetime
 
+from .filters import PriorizedSearchFilter
 from .serializers import (
     MovieSerializer,
     ContactSerializer,
@@ -40,6 +42,15 @@ class MovieViewSet(viewsets.ModelViewSet):
         return super().get_object()
 
     def filter_queryset(self, queryset):
+        filter_backends = []
+
+        for filter_backend in self.filter_backends:
+            if filter_backend is SearchFilter:
+                filter_backends.append(PriorizedSearchFilter)
+                continue
+            filter_backends.append(filter_backend)
+
+        self.filter_backends = filter_backends
         queryset = super().filter_queryset(queryset)
 
         if self.action == "list":
