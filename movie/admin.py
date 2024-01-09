@@ -1,6 +1,6 @@
 from sortedm2m_filter_horizontal_widget.forms import SortedFilteredSelectMultiple
+from .mixins import MovieResource, AnalyticsMixin, ArchiveMixin
 from import_export.admin import ImportExportMixin
-from .mixins import MovieResource, AnalyticsMixin
 from django.contrib import admin, messages
 import datetime
 import random
@@ -22,6 +22,9 @@ from .models import (
 )
 
 # Register your models here.
+
+admin.site.site_title = "Movie Guessing Game site admin"
+admin.site.site_header = "Movie Guessing Game Administration"
 
 
 @admin.register(Genre)
@@ -103,10 +106,11 @@ class MovieAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 @admin.register(Archive)
-class ArchiveAdmin(ImportExportMixin, admin.ModelAdmin):
+class ArchiveAdmin(ArchiveMixin, ImportExportMixin, admin.ModelAdmin):
     list_display = ("id", "date", "movie")
     list_display_links = list_display
     search_fields = ("date", "movie__name")
+    ordering = ("-date",)
     autocomplete_fields = ("movie",)
 
 

@@ -129,7 +129,7 @@ class Archive(models.Model):
     movie = models.ForeignKey(Movie, verbose_name="Movie", on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"Archive - {self.movie}"
+        return f"{self.date} - {self.movie}"
 
 
 class Contact(models.Model):

@@ -1,11 +1,15 @@
+import random
 from django import forms
-from django.urls import path
 from collections import Counter
 from statistics import mean, median
+from django.contrib import messages
+from django.urls import path, reverse
 from datetime import datetime, timedelta
+from django.http import HttpResponseRedirect
 from import_export.resources import ModelResource
 from django.template.response import TemplateResponse
 from .models import Movie, Archive, UserActivity, Guess
+from django.contrib.admin.widgets import FilteredSelectMultiple, AdminDateWidget
 
 
 class RelatedResourceMixin(ModelResource):
@@ -71,7 +75,7 @@ class AnalyticsForm(forms.Form):
     )
     guesses = forms.IntegerField(label="Number of Guesses", min_value=0)
     trial = forms.IntegerField(label="Trial", min_value=0)
-    date = forms.DateField(label="Date", widget=forms.SelectDateWidget())
+    date = forms.DateField(label="Date", widget=AdminDateWidget())
 
 
 class AnalyticsMixin:
@@ -129,6 +133,7 @@ class AnalyticsMixin:
                 "title": "Analytics",
                 "opts": self.model._meta,
                 "form": analytics_form,
+                "media": analytics_form.media,
             }
         )
 
@@ -270,3 +275,86 @@ class AnalyticsMixin:
             "time_taken": self.time_taken(form_data),
             "guesses_count": self.guesses_count(form_data),
         }
+
+
+class ArchiveForm(forms.Form):
+    date = forms.DateField(label="Date", widget=AdminDateWidget())
+    movies = forms.ModelMultipleChoiceField(
+        label="Movies",
+        queryset=Movie.objects.all().order_by("-id"),
+        widget=FilteredSelectMultiple("Movies", is_stacked=False),
+    )
+
+
+class ArchiveMixin:
+    archive_change_list_template = "admin/archive/change_list_archive.html"
+    archive_template_name = "admin/archive/archive.html"
+    archive_form_class = ArchiveForm
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.change_list_template = self.archive_change_list_template
+
+    def get_model_info(self):
+        app_label = self.model._meta.app_label
+        return (app_label, self.model._meta.model_name)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        info = self.get_model_info()
+        my_urls = [
+            path(
+                "bulk-add/",
+                self.admin_site.admin_view(self.bulk_add),
+                name="%s_%s_bulk_add" % info,
+            ),
+        ]
+        return my_urls + urls
+
+    def bulk_add(self, request, *args, **kwargs):
+        context = {}
+
+        if request.method == "POST":
+            archive_form = ArchiveForm(request.POST)
+            if archive_form.is_valid():
+                date = archive_form.cleaned_data["date"]
+                movies = list(archive_form.cleaned_data["movies"])
+                movies_count = len(movies)
+
+                dates = []
+                start_date = date
+                count = movies_count
+                while count > 0:
+                    if not Archive.objects.filter(date=start_date).exists():
+                        dates.append(start_date)
+                        count -= 1
+                    start_date += timedelta(days=1)
+
+                random.shuffle(movies)
+
+                instances = [
+                    Archive(date=dates[idx], movie=movie)
+                    for idx, movie in enumerate(movies)
+                ]
+
+                Archive.objects.bulk_create(instances)
+
+                messages.success(
+                    request, f"{movies_count} archives was added successfully."
+                )
+                return HttpResponseRedirect(reverse("admin:movie_archive_changelist"))
+        else:
+            archive_form = ArchiveForm()
+
+        context.update(self.admin_site.each_context(request))
+        context.update(
+            {
+                "title": "Bulk Add archive",
+                "opts": self.model._meta,
+                "form": archive_form,
+                "media": archive_form.media,
+            }
+        )
+        request.current_app = self.admin_site.name
+
+        return TemplateResponse(request, [self.archive_template_name], context)

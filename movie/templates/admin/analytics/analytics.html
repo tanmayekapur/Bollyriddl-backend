@@ -1,10 +1,19 @@
 {% extends "admin/import_export/base.html" %}
 {% load i18n %}
 {% load admin_urls %}
-{% load import_export_tags %}
 {% load static %}
 
-{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "import_export/import.css" %}" />{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "admin/css/forms.css" %}">{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+
+{% block extrahead %}{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+<script src="/static/admin/js/core.js"></script>
+{{ media }}
+{% endblock %}
 
 {% block breadcrumbs_last %}
 {% trans "Analytics" %}
