@@ -1,10 +1,27 @@
 from rest_framework import viewsets, permissions, exceptions
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.decorators import action
 import datetime
 
-from .serializers import MovieSerializer
-from .models import Movie, Archive
+from .filters import PriorizedSearchFilter
+from .serializers import (
+    MovieSerializer,
+    ContactSerializer,
+    FeedbackSerializer,
+    FeedbackSubjectSerializer,
+    UserSerializer,
+    UserActivitySerializer,
+)
+from .models import (
+    Movie,
+    Archive,
+    Contact,
+    Feedback,
+    FeedbackSubject,
+    User,
+    UserActivity,
+)
 
 # Create your views here.
 
@@ -14,31 +31,123 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     http_method_names = ["get", "head"]
-    search_fields = ["name"]
+    search_size = 10
+    search_fields = ["^name", "name"]
     ordering_fields = ["name"]
 
     def get_object(self):
-        raise exceptions.NotFound("Not found.", "not_found")
+        if self.action == "get_hint":
+            self.queryset = Archive.objects.all()
 
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        response.data = [data["name"] for data in response.data]
-        return response
+        return super().get_object()
+
+    def filter_queryset(self, queryset):
+        filter_backends = []
+
+        for filter_backend in self.filter_backends:
+            if filter_backend is SearchFilter:
+                filter_backends.append(PriorizedSearchFilter)
+                continue
+            filter_backends.append(filter_backend)
+
+        self.filter_backends = filter_backends
+        queryset = super().filter_queryset(queryset)
+
+        if self.action == "list":
+            return queryset[: self.search_size]
+
+        return queryset
 
     @action(
         detail=False,
         methods=["get"],
-        url_path="match-mystery-movie",
-        name="Match Mystery Movie",
+        url_path="get-mystery-movie",
+        name="Get Mystery Movie",
     )
-    def match_mystery_movie(self, request):
-        movie_name = request.query_params.get("name")
+    def get_mystery_movie(self, request):
+        today = datetime.date.today()
         date = request.query_params.get("date")
+
+        if date:
+            try:
+                date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+            except Exception:
+                raise exceptions.ValidationError(
+                    {
+                        "date": [
+                            f"'{date}' value has an invalid date format. It must be in YYYY-MM-DD format."
+                        ]
+                    },
+                    "invalid",
+                )
+        else:
+            date = today
+
+        if Archive.objects.filter(date=date).exists():
+            mystery_movie = Archive.objects.get(date=date)
+            data = self.get_serializer(mystery_movie.movie).data
+            data["id"] = mystery_movie.id
+            return Response(data, status=200)
+
+        else:
+            raise exceptions.NotFound("Not found.", "not_found")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="get-hint",
+        name="Get Hint",
+    )
+    def get_hint(self, request, *args, **kwargs):
+        movie = self.get_object().movie
+        id = request.query_params.get("id")
+        key = request.query_params.get("key")
+        keys = [
+            "genres",
+            "cast",
+            "writers",
+            "directors",
+            "music_directors",
+            "production_houses",
+        ]
 
         validation_errors = {}
 
-        if not movie_name:
-            validation_errors["name"] = ["This field may not be blank."]
+        if not id:
+            validation_errors["id"] = ["This field may not be blank."]
+
+        if not key:
+            validation_errors["key"] = ["This field may not be blank."]
+
+        if validation_errors:
+            raise exceptions.ValidationError(validation_errors, "blank")
+
+        try:
+            id = int(id)
+        except Exception:
+            validation_errors["id"] = ["'id' value must be an integer."]
+
+        if key not in keys:
+            validation_errors["key"] = [f"'key' value must be one of: {keys}"]
+
+        if validation_errors:
+            raise exceptions.ValidationError(validation_errors, "invalid")
+
+        if getattr(movie, key).filter(id=id).exists():
+            value = getattr(movie, key).get(id=id)
+            return Response(value.name, status=200)
+        else:
+            raise exceptions.NotFound("Not found.", "not_found")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="match-mystery-movie",
+        name="Match Mystery Movie",
+    )
+    def match_mystery_movie(self, request, *args, **kwargs):
+        date = request.query_params.get("date")
+        validation_errors = {}
 
         if not date:
             validation_errors["date"] = ["This field may not be blank."]
@@ -57,13 +166,6 @@ class MovieViewSet(viewsets.ModelViewSet):
             raise exceptions.ValidationError(validation_errors, "invalid")
 
         try:
-            guessed_movie = Movie.objects.get(name__iexact=movie_name)
-        except Exception:
-            validation_errors["name"] = [
-                f"Movie with name '{movie_name}' does not exists."
-            ]
-
-        try:
             mystery_movie = Archive.objects.get(date=date)
         except Exception:
             validation_errors["date"] = [
@@ -73,58 +175,83 @@ class MovieViewSet(viewsets.ModelViewSet):
         if validation_errors:
             raise exceptions.NotFound(validation_errors, "not_found")
 
+        guessed_movie = self.get_object()
         data = self.get_serializer(guessed_movie).data
 
         if guessed_movie == mystery_movie.movie:
             data["message"] = "Movie matched."
+            data["matched"] = True
             return Response(data, status=200)
 
         else:
-            mystery_movie = mystery_movie.movie
+            mystery_movie_data = self.get_serializer(mystery_movie.movie).data
             data["message"] = "Movie not matched."
-            data.pop("name")
+            data["matched"] = False
+            common_data = {}
 
-            if guessed_movie.year != mystery_movie.year:
-                data.pop("year")
+            for key, value in data.items():
+                if isinstance(value, list):
+                    common_data[key] = [
+                        item
+                        for item in value
+                        if item in mystery_movie_data.get(key, [])
+                    ]
+                else:
+                    common_data[key] = value
 
-            if guessed_movie.director != mystery_movie.director:
-                data.pop("director")
+            return Response(common_data, status=200)
 
-            if guessed_movie.production_house != mystery_movie.production_house:
-                data.pop("production_house")
 
-            common_genres = mystery_movie.genres.all().intersection(
-                guessed_movie.genres.all()
-            )
-            if common_genres.exists():
-                data["genres"] = [genre.name for genre in common_genres]
-            else:
-                data.pop("genres")
+class ContactViewSet(viewsets.ModelViewSet):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["post", "head"]
 
-            common_cast = mystery_movie.cast.all().intersection(
-                guessed_movie.cast.all()
-            )
-            if common_cast.exists():
-                data["cast"] = [cast.name for cast in common_cast]
-            else:
-                data.pop("cast")
 
-            common_writers = mystery_movie.writers.all().intersection(
-                guessed_movie.writers.all()
-            )
-            if common_writers.exists():
-                data["writers"] = [writers.name for writers in common_writers]
-            else:
-                data.pop("writers")
+class FeedbackViewSet(viewsets.ModelViewSet):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["post", "head"]
 
-            common_music_directors = mystery_movie.music_directors.all().intersection(
-                guessed_movie.music_directors.all()
-            )
-            if common_music_directors.exists():
-                data["music_directors"] = [
-                    music_directors.name for music_directors in common_music_directors
-                ]
-            else:
-                data.pop("music_directors")
 
-            return Response(data, status=200)
+class FeedbackSubjectViewSet(viewsets.ModelViewSet):
+    queryset = FeedbackSubject.objects.all()
+    serializer_class = FeedbackSubjectSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    http_method_names = ["get", "head"]
+
+    def get_object(self):
+        raise exceptions.NotFound("Not found.", "not_found")
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    http_method_names = ["get", "head"]
+
+    def get_queryset(self):
+        raise exceptions.NotFound("Not found.", "not_found")
+
+    def get_object(self):
+        raise exceptions.NotFound("Not found.", "not_found")
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="create-user",
+        name="Create User",
+    )
+    def create_user(self, request):
+        user = User.objects.create()
+        data = self.get_serializer(user).data
+        return Response(data, status=200)
+
+
+class UserActivityViewSet(viewsets.ModelViewSet):
+    queryset = UserActivity.objects.all()
+    serializer_class = UserActivitySerializer
+    permission_classes = [permissions.AllowAny]
+    http_method_names = ["post", "head"]

@@ -1,0 +1,51 @@
+{% extends "admin/import_export/base.html" %}
+{% load i18n %}
+{% load admin_urls %}
+{% load static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "admin/css/forms.css" %}">{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+
+{% block extrahead %}{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+
+{% block breadcrumbs_last %}
+{% trans "Bulk Add archive" %}
+{% endblock %}
+
+
+{% block content %}
+{% block archive_form %}
+    <form action="" method="post">
+      {% csrf_token %}
+
+      {% block form_detail %}
+          <fieldset class="module aligned">
+          {% for field in form %}
+            <div class="form-row">
+              {{ field.errors }}
+
+              {{ field.label_tag }}
+
+              {{ field }}
+
+              {% if field.field.help_text %}
+              <p class="help">{{ field.field.help_text|safe }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </fieldset>
+      {% endblock %}
+
+      {% block form_submit_button %}
+        <div class="submit-row">
+          <input type="submit" class="default" value="{% trans "Save" %}">
+        </div>
+      {% endblock %}
+    </form>
+    {% endblock %}
+{% endblock %}
