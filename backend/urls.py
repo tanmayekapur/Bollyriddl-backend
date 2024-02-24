@@ -38,6 +38,6 @@ router.register(r"user", UserViewSet)
 router.register(r"user-activity", UserActivityViewSet)
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/", include(router.urls)),
+    path("backend/admin/", admin.site.urls),
+    path("backend/api/", include(router.urls)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

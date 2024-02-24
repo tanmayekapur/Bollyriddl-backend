@@ -29,6 +29,7 @@ env = environ.Env(
     CORS_ALLOW_CREDENTIALS=(bool, False),
     CORS_ORIGIN_ALLOW_ALL=(bool, False),
     CORS_ORIGIN_WHITELIST=(list, []),
+    CSRF_TRUSTED_ORIGINS=(list, []),
     API_BASE_URL=(str, ""),
 )
 
@@ -36,27 +37,18 @@ env = environ.Env(
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
-AES_KEY = env("AES_KEY")
+# SECRET_KEY = env("SECRET_KEY")
+# AES_KEY = env("AES_KEY")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG")
+# DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
-
+# ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
 # Application definition
 
 DEFAULT_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-]
-
-INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -163,7 +155,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "backend/static/"
+# STATIC_ROOT = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 MEDIA_ROOT = BASE_DIR / "media"
@@ -177,14 +170,25 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Django CORS Headers Settings
-CORS_ALLOW_CREDENTIALS = env("CORS_ALLOW_CREDENTIALS")
-CORS_ORIGIN_ALLOW_ALL = env("CORS_ORIGIN_ALLOW_ALL")
-CORS_ORIGIN_WHITELIST = env("CORS_ORIGIN_WHITELIST")
+# CORS_ALLOW_CREDENTIALS = env("CORS_ALLOW_CREDENTIALS")
+# CORS_ORIGIN_ALLOW_ALL = env("CORS_ORIGIN_ALLOW_ALL")
+# CORS_ORIGIN_WHITELIST = env("CORS_ORIGIN_WHITELIST")
+# CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
+
+# .env 
+SECRET_KEY = "c6d!ec+oqg&*)7%$0zi223z1vpeo$&&m8%$q#6=$n5=@k$6@&m"
+AES_KEY = "ttp9ylxDTgwrkROFfoGD2Rnp8Yo3npFt+7HzZG7TEkI"
+DEBUG = True
+ALLOWED_HOSTS = ['riddlgames.com']
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ORIGIN_WHITELIST = ["https://riddlgames.com"]
+CSRF_TRUSTED_ORIGINS = ["https://riddlgames.com"]
+API_BASE_URL = "http://127.0.0.1:8000/api"
 
 # API Base URL
-API_BASE_URL = env("API_BASE_URL")
-
+# API_BASE_URL = env("API_BASE_URL")
 
 # Rest Framework Settings
 DEFAULT_RENDERER_CLASSES = [
@@ -204,4 +208,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_RENDERER_CLASSES": DEFAULT_RENDERER_CLASSES,
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+    #    "DEFAULT_PERMISSION_CLASSES": [
+    #     "rest_framework.permissions.AllowAny",
+    # ], 
 }
