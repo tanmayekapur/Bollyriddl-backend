@@ -83,7 +83,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         else:
             date = today
 
-        if Archive.objects.filter(date=date).exists():
+        if Archive.objects.filter(date=date).exists() and date <= today:
             mystery_movie = Archive.objects.get(date=date)
             data = self.get_serializer(mystery_movie.movie).data
             data["id"] = mystery_movie.id

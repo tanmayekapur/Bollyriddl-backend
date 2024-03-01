@@ -58,6 +58,7 @@ class APIRenderer(BaseRenderer):
         data = response_data
         json_data = json.dumps(data)
         key = base64.b64decode(f"{settings.AES_KEY}=")
-        encryped_data = self.aes_encrypt(json_data, key)
+        # encryped_data = self.aes_encrypt(json_data, key)
+        encryped_data = json_data
 
         return encryped_data
