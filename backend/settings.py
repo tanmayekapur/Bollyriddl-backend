@@ -33,15 +33,23 @@ env = environ.Env(
     API_BASE_URL=(str, ""),
 )
 
-# .env 
+# .env
 SECRET_KEY = "c6d!ec+oqg&*)7%$0zi223z1vpeo$&&m8%$q#6=$n5=@k$6@&m"
 AES_KEY = "ttp9ylxDTgwrkROFfoGD2Rnp8Yo3npFt+7HzZG7TEkI"
 DEBUG = True
-ALLOWED_HOSTS = ['riddlgames.com', "backend.riddlgames.com", "out.riddlgames.com"]
+ALLOWED_HOSTS = ["riddlgames.com", "backend.riddlgames.com", "out.riddlgames.com"]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = False
-CORS_ORIGIN_WHITELIST = ["https://riddlgames.com", "https://backend.riddlgames.com","https://out.riddlgames.com"]
-CSRF_TRUSTED_ORIGINS = ["https://riddlgames.com", "https://backend.riddlgames.com","https://out.riddlgames.com"]
+CORS_ORIGIN_WHITELIST = [
+    "https://riddlgames.com",
+    "https://backend.riddlgames.com",
+    "https://out.riddlgames.com",
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://riddlgames.com",
+    "https://backend.riddlgames.com",
+    "https://out.riddlgames.com",
+]
 API_BASE_URL = "http://127.0.0.1:8000/api"
 
 # Quick-start development settings - unsuitable for production
@@ -124,8 +132,12 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "riddl_games",
+        "USER": "riddlgames",
+        "PASSWORD": "strf**k@8567",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -187,8 +199,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
 
-
-
 # API Base URL
 # API_BASE_URL = env("API_BASE_URL")
 
@@ -212,5 +222,5 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
     #    "DEFAULT_PERMISSION_CLASSES": [
     #     "rest_framework.permissions.AllowAny",
-    # ], 
+    # ],
 }
