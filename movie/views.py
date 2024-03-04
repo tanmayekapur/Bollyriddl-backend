@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, exceptions
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.decorators import action
-import datetime
+from django.utils import timezone
 
 from .filters import PriorizedSearchFilter
 from .serializers import (
@@ -65,12 +65,12 @@ class MovieViewSet(viewsets.ModelViewSet):
         name="Get Mystery Movie",
     )
     def get_mystery_movie(self, request):
-        today = datetime.date.today()
+        today = timezone.now().date()
         date = request.query_params.get("date")
 
         if date:
             try:
-                date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+                date = timezone.datetime.strptime(date, "%Y-%m-%d").date()
             except Exception:
                 raise exceptions.ValidationError(
                     {
@@ -156,7 +156,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             raise exceptions.ValidationError(validation_errors, "blank")
 
         try:
-            datetime.datetime.strptime(date, "%Y-%m-%d")
+            timezone.datetime.strptime(date, "%Y-%m-%d")
         except Exception:
             validation_errors["date"] = [
                 f"'{date}' value has an invalid date format. It must be in YYYY-MM-DD format."
