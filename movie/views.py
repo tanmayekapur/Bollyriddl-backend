@@ -67,11 +67,14 @@ class MovieViewSet(viewsets.ModelViewSet):
     def get_mystery_movie(self, request):
         today = timezone.now().date()
         date = request.query_params.get("date")
+        iso_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
         if date:
             try:
                 tz = timezone.get_current_timezone()
-                date = timezone.datetime.fromisoformat(date).astimezone(tz).date()
+                date = timezone.datetime.strptime(date, iso_format)
+                date = timezone.make_aware(date, timezone=timezone.utc)
+                date = date.astimezone(tz).date()
             except Exception:
                 raise exceptions.ValidationError(
                     {
@@ -148,6 +151,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     )
     def match_mystery_movie(self, request, *args, **kwargs):
         date = request.query_params.get("date")
+        iso_format = "%Y-%m-%dT%H:%M:%S.%fZ"
         validation_errors = {}
 
         if not date:
@@ -158,7 +162,9 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         try:
             tz = timezone.get_current_timezone()
-            date = timezone.datetime.fromisoformat(date).astimezone(tz).date()
+            date = timezone.datetime.strptime(date, iso_format)
+            date = timezone.make_aware(date, timezone=timezone.utc)
+            date = date.astimezone(tz).date()
         except Exception:
             validation_errors["date"] = [
                 f"'{date}' value has an invalid date format. It must be in YYYY-MM-DD format."
