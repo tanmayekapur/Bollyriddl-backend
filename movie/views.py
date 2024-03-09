@@ -70,12 +70,13 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         if date:
             try:
-                date = timezone.datetime.strptime(date, "%Y-%m-%d").date()
+                tz = timezone.get_current_timezone()
+                date = timezone.datetime.fromisoformat(date).astimezone(tz).date()
             except Exception:
                 raise exceptions.ValidationError(
                     {
                         "date": [
-                            f"'{date}' value has an invalid date format. It must be in YYYY-MM-DD format."
+                            f"'{date}' value has an invalid date format. It must be in ISO format."
                         ]
                     },
                     "invalid",
@@ -156,7 +157,8 @@ class MovieViewSet(viewsets.ModelViewSet):
             raise exceptions.ValidationError(validation_errors, "blank")
 
         try:
-            timezone.datetime.strptime(date, "%Y-%m-%d")
+            tz = timezone.get_current_timezone()
+            date = timezone.datetime.fromisoformat(date).astimezone(tz).date()
         except Exception:
             validation_errors["date"] = [
                 f"'{date}' value has an invalid date format. It must be in YYYY-MM-DD format."
