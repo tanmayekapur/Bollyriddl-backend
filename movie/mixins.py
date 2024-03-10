@@ -42,31 +42,6 @@ class RelatedResourceMixin(ModelResource):
             super().import_field(field, obj, data)
 
 
-class MovieResource(RelatedResourceMixin):
-    """
-    Resource class for Movie model.
-    """
-
-    class Meta:
-        model = Movie
-
-    def before_import_row(self, row, **kwargs):
-        """
-        Override before_import_row to handle unique constraint violations.
-        """
-        name = row.get("name", None)
-        imdb_id = row.get("imdb_id", None)
-        if name:
-            if Movie.objects.filter(name=name).exists():
-                row["id"] = Movie.objects.get(name=name).id
-
-        if imdb_id:
-            if Movie.objects.filter(imdb_id=imdb_id).exists():
-                row["id"] = Movie.objects.get(imdb_id=imdb_id).id
-
-        super().before_import_row(row, **kwargs)
-
-
 class AnalyticsForm(forms.Form):
     movie = forms.ModelChoiceField(
         label="Movie",

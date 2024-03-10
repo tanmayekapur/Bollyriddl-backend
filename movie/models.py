@@ -191,6 +191,7 @@ class Guess(models.Model):
 
 class UserActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
     guessed_movies = SortedManyToManyField(
         Movie,
         through=Guess,
@@ -210,10 +211,9 @@ class UserActivity(models.Model):
 
     @property
     def winner(self):
-        if Archive.objects.filter(date=self.start_time.date()).exists():
-            mystery_movie = Archive.objects.get(date=self.start_time.date()).movie
-            if self.guess_set.last().movie.id == mystery_movie.id:
-                return True
+        mystery_movie = self.archive.movie
+        if self.guess_set.last().movie.id == mystery_movie.id:
+            return True
         return False
 
     class Meta:

@@ -1,10 +1,11 @@
 from sortedm2m_filter_horizontal_widget.forms import SortedFilteredSelectMultiple
-from .mixins import MovieResource, AnalyticsMixin, ArchiveMixin
 from import_export.admin import ImportExportMixin
 from django.contrib import admin, messages
 import datetime
 import random
 
+from .resources import MovieResource, UserActivityResource
+from .mixins import AnalyticsMixin, ArchiveMixin
 from .models import (
     Genre,
     Cast,
@@ -168,6 +169,8 @@ class UserActivityAdmin(AnalyticsMixin, ImportExportMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "user",
+        "start_time",
+        "archive_id",
         "total_time",
         "guessed_movies_count",
         "winner_display",
@@ -176,6 +179,7 @@ class UserActivityAdmin(AnalyticsMixin, ImportExportMixin, admin.ModelAdmin):
     search_fields = ("user__uuid",)
     readonly_fields = ("guessed_movies_count", "total_time", "winner_display")
     inlines = [GuessInline]
+    resource_class = UserActivityResource
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = [field.name for field in self.model._meta.fields]
