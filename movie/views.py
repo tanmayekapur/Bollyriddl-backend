@@ -65,13 +65,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         name="Get Mystery Movie",
     )
     def get_mystery_movie(self, request):
-        today = timezone.now()
-        today = today.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
-        tz = timezone.get_current_timezone()
-        today = timezone.datetime.strptime(today, '%Y-%m-%dT%H:%M:%S.%f')
-        today = timezone.make_aware(today, timezone=timezone.utc)
-        today = today.astimezone(tz).date()
-
+        today = timezone.localtime().date()
         date = request.query_params.get("date")
         iso_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
