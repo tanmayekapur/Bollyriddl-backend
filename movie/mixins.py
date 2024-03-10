@@ -43,14 +43,25 @@ class RelatedResourceMixin(ModelResource):
 
 
 class AnalyticsForm(forms.Form):
-    movie = forms.ModelChoiceField(
-        label="Movie",
-        queryset=Movie.objects.all().order_by("-id"),
-        widget=forms.Select(attrs={"autocomplete": "off"}),
+    CHOICES = (
+        ("guess_count", "No. of times any movie is guessed on given date"),
+        ("min_max_movies_by_trial", "Most & Least guessed movie at given trial"),
+        ("min_max_movies_by_date", "Most & Least guessed movie on given date"),
+        (
+            "time_taken",
+            "Minimum, mean and median time taken in given guesses and date",
+        ),
+        ("guesses_count", "Minimum, mean and median guesses on given date"),
     )
-    guesses = forms.IntegerField(label="Number of Guesses", min_value=0)
-    trial = forms.IntegerField(label="Trial", min_value=0)
-    date = forms.DateField(label="Date", widget=AdminDateWidget())
+    analytics_choice = forms.ChoiceField(label="Analytics Choice", choices=CHOICES)
+    # movie = forms.ModelChoiceField(
+    #     label="Movie",
+    #     queryset=Movie.objects.all().order_by("-id"),
+    #     widget=forms.Select(attrs={"autocomplete": "off"}),
+    # )
+    # guesses = forms.IntegerField(label="Number of Guesses", min_value=0)
+    # trial = forms.IntegerField(label="Trial", min_value=0)
+    # date = forms.DateField(label="Date", widget=AdminDateWidget())
 
 
 class AnalyticsMixin:
@@ -92,7 +103,8 @@ class AnalyticsMixin:
         if request.method == "POST":
             analytics_form = AnalyticsForm(request.POST)
             if analytics_form.is_valid():
-                analytics_data = self.get_analytics_data(analytics_form.cleaned_data)
+                analytics_data = self.get_analytics_data(analytics_form)
+                analytics_form = AnalyticsForm(analytics_form.cleaned_data)
                 context.update(
                     {
                         "form": analytics_form,
@@ -100,6 +112,7 @@ class AnalyticsMixin:
                     }
                 )
         else:
+            self.remove_fields()
             analytics_form = AnalyticsForm()
 
         context.update(self.admin_site.each_context(request))
@@ -122,14 +135,19 @@ class AnalyticsMixin:
         if not movie:
             return None
 
+        if not isinstance(movie, Movie):
+            movie = movie[0]
+
         guess_count = UserActivity.objects.filter(
             guessed_movies__id=movie.id, start_time__date=date
         ).count()
         return guess_count
 
     def min_max_movies(self, form_data, target, by):
-        trial = form_data["trial"] - 1
-        date = form_data["date"]
+        if "trial" in form_data:
+            trial = form_data["trial"] - 1
+        if "date" in form_data:
+            date = form_data["date"]
 
         if by == "trial":
             guesses = Guess.objects.filter(order=trial)
@@ -232,24 +250,98 @@ class AnalyticsMixin:
             "guesses_count": self.guesses_count(form_data),
         }
 
-    def get_analytics_data(self, form_data):
-        return {
-            "movie": form_data["movie"].name,
-            "guesses": form_data["guesses"],
-            "trial": form_data["trial"],
-            "date": form_data["date"].strftime("%Y-%m-%d"),
-            "guess_count": self.guess_count(form_data),
-            "min_max_movies_by_trial": (
-                self.min_max_movies(form_data, min, "trial"),
-                self.min_max_movies(form_data, max, "trial"),
-            ),
-            "min_max_movies_by_date": (
-                self.min_max_movies(form_data, min, "date"),
-                self.min_max_movies(form_data, max, "date"),
-            ),
-            "time_taken": self.time_taken(form_data),
-            "guesses_count": self.guesses_count(form_data),
-        }
+    def remove_fields(self):
+        fields_to_remove = set(AnalyticsForm.base_fields.keys()) - set(
+            ["analytics_choice"]
+        )
+        for field_name in fields_to_remove:
+            del AnalyticsForm.base_fields[field_name]
+
+    def add_fields(self, form):
+        movie = forms.ModelMultipleChoiceField(
+            label="Movies",
+            queryset=Movie.objects.all().order_by("-id"),
+            widget=FilteredSelectMultiple("Movies", is_stacked=False),
+            required=False,
+        )
+        date = forms.DateField(
+            label="Date (yyyy-mm-dd)", widget=AdminDateWidget(), required=False
+        )
+        trial = forms.IntegerField(label="Trial", min_value=0, required=False)
+        guesses = forms.IntegerField(
+            label="Number of Guesses", min_value=0, required=False
+        )
+        choice = form.cleaned_data["analytics_choice"]
+        if choice == "guess_count":
+            self.remove_fields()
+            AnalyticsForm.base_fields["movie"] = movie
+            AnalyticsForm.base_fields["date"] = date
+
+        elif choice == "min_max_movies_by_trial":
+            self.remove_fields()
+            AnalyticsForm.base_fields["trial"] = trial
+
+        elif choice == "min_max_movies_by_date":
+            self.remove_fields()
+            AnalyticsForm.base_fields["date"] = date
+
+        elif choice == "time_taken":
+            self.remove_fields()
+            AnalyticsForm.base_fields["date"] = date
+            AnalyticsForm.base_fields["guesses"] = guesses
+
+        elif choice == "guesses_count":
+            self.remove_fields()
+            AnalyticsForm.base_fields["date"] = date
+
+    def get_analytics_data(self, form):
+        form_data = form.cleaned_data
+        choice = form_data["analytics_choice"]
+        self.add_fields(form)
+        res = {}
+
+        if choice == "guess_count":
+            movie = form_data.get("movie", None)
+            date = form_data.get("date", None)
+            if movie is not None and date is not None:
+                if len(movie) > 0:
+                    res["movie"] = movie[0].name
+                    res["date"] = date.strftime("%Y-%m-%d")
+                    res["guess_count"] = self.guess_count(form_data)
+
+        elif choice == "min_max_movies_by_trial":
+            trial = form_data.get("trial", None)
+            if trial is not None:
+                res["trial"] = trial
+                res["min_max_movies_by_trial"] = (
+                    self.min_max_movies(form_data, min, "trial"),
+                    self.min_max_movies(form_data, max, "trial"),
+                )
+
+        elif choice == "min_max_movies_by_date":
+            date = form_data.get("date", None)
+            if date is not None:
+                res["date"] = date.strftime("%Y-%m-%d")
+                res["min_max_movies_by_date"] = (
+                    self.min_max_movies(form_data, min, "date"),
+                    self.min_max_movies(form_data, max, "date"),
+                )
+
+        elif choice == "time_taken":
+            date = form_data.get("date", None)
+            guesses = form_data.get("guesses", None)
+            if date is not None and guesses is not None:
+                res["date"] = date.strftime("%Y-%m-%d")
+                res["guesses"] = guesses
+                res["time_taken"] = self.time_taken(form_data)
+
+        elif choice == "guesses_count":
+            date = form_data.get("date", None)
+            if date is not None:
+                res["date"] = date.strftime("%Y-%m-%d")
+                res["guesses_count"] = self.guesses_count(form_data)
+
+        return res
 
 
 class ArchiveForm(forms.Form):

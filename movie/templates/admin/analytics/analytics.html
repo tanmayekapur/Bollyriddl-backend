@@ -135,74 +135,104 @@
     {% if analytics_data %}
     <div>
       <h2>
-        Analytics data for {{ analytics_data.movie }}  movie, {{ analytics_data.guesses }} guesses, {{analytics_data.trial }} trial(s) and {{ analytics_data.date }} date.
+        Analytics Data
       </h2>
       <p>
+        {% if analytics_data.movie %}
+        Movie - {{ analytics_data.movie }}
+        {% endif %}
+      </p>
+      <p>
+        {% if analytics_data.guesses %}
+        Guesses - {{ analytics_data.guesses }}
+        {% endif %}
+      </p>
+      <p>
+        {% if analytics_data.trial %}
+        Trials - {{ analytics_data.trial }}
+        {% endif %}
+      </p>
+      <p>
+        {% if analytics_data.date %}
+        Date - {{ analytics_data.date }}
+        {% endif %}
+      </p>
+      <p>
         <ul>
+          {% if analytics_data.movie %}
           <li>{{ analytics_data.movie }} movie is guessed <strong>{{ analytics_data.guess_count }}</strong> times.</li>
-
-          {% if analytics_data.time_taken.0 %}
-          <li>Minimum Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
           {% endif %}
 
-          {% if analytics_data.time_taken.1 %}
-          <li>Mean Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
+          {% if analytics_data.time_taken %}
+            {% if analytics_data.time_taken.0 %}
+            <li>Minimum Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
+            {% endif %}
+
+            {% if analytics_data.time_taken.1 %}
+            <li>Mean Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
+            {% endif %}
+
+            {% if analytics_data.time_taken.2 %}
+            <li>Median Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
+            {% endif %}
           {% endif %}
 
-          {% if analytics_data.time_taken.2 %}
-          <li>Median Time Taken - <strong>{{ analytics_data.time_taken.0 }}</strong></li>
+          {% if analytics_data.guesses_count %}
+            {% if analytics_data.guesses_count.0 %}
+            <li>Minimum Guesses - <strong>{{ analytics_data.guesses_count.0 }}</strong></li>
+            {% endif %}
+
+            {% if analytics_data.guesses_count.1 %}
+            <li>Mean Guesses - <strong>{{ analytics_data.guesses_count.1 }}</strong></li>
+            {% endif %}
+
+            {% if analytics_data.guesses_count.2 %}
+            <li>Median Guesses - <strong>{{ analytics_data.guesses_count.2 }}</strong></li>
+            {% endif %}
           {% endif %}
 
-          {% if analytics_data.guesses_count.0 %}
-          <li>Minimum Guesses - <strong>{{ analytics_data.guesses_count.0 }}</strong></li>
-          {% endif %}
-
-          {% if analytics_data.guesses_count.1 %}
-          <li>Mean Guesses - <strong>{{ analytics_data.guesses_count.1 }}</strong></li>
-          {% endif %}
-
-          {% if analytics_data.guesses_count.2 %}
-          <li>Median Guesses - <strong>{{ analytics_data.guesses_count.2 }}</strong></li>
-          {% endif %}
-
-          {% if analytics_data.min_max_movies_by_date.1 %}
-          <li>Most guessed movie(s) on {{ analytics_data.date }}:
-            <ul>
-              {% for movie in analytics_data.min_max_movies_by_date.1 %}
-              <li>{{ movie }}</li>
-              {% endfor %}
-            </ul>
-          </li>
-          {% endif %}
-
-          {% if analytics_data.min_max_movies_by_date.0 %}
-          <li>Least guessed movie(s) on {{ analytics_data.date }}:
-            <ul>
-              {% for movie in analytics_data.min_max_movies_by_date.0 %}
+          {% if analytics_data.min_max_movies_by_date %}
+            {% if analytics_data.min_max_movies_by_date.1 %}
+            <li>Most guessed movie(s) on {{ analytics_data.date }}:
+              <ul>
+                {% for movie in analytics_data.min_max_movies_by_date.1 %}
                 <li>{{ movie }}</li>
-              {% endfor %}
-            </ul>
-          </li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% endif %}
+
+            {% if analytics_data.min_max_movies_by_date.0 %}
+            <li>Least guessed movie(s) on {{ analytics_data.date }}:
+              <ul>
+                {% for movie in analytics_data.min_max_movies_by_date.0 %}
+                  <li>{{ movie }}</li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% endif %}
           {% endif %}
 
-          {% if analytics_data.min_max_movies_by_trial.1 %}
-          <li>Most guessed movie(s) at trial {{ analytics_data.trial }}:
-            <ul>
-              {% for movie in analytics_data.min_max_movies_by_trial.1 %}
-              <li>{{ movie }}</li>
-              {% endfor %}
-            </ul>
-          </li>
-          {% endif %}
-
-          {% if analytics_data.min_max_movies_by_trial.0 %}
-          <li>Least guessed movie(s) at trial {{ analytics_data.trial }}:
-            <ul>
-              {% for movie in analytics_data.min_max_movies_by_trial.0 %}
+          {% if analytics_data.min_max_movies_by_trial %}
+            {% if analytics_data.min_max_movies_by_trial.1 %}
+            <li>Most guessed movie(s) at trial {{ analytics_data.trial }}:
+              <ul>
+                {% for movie in analytics_data.min_max_movies_by_trial.1 %}
                 <li>{{ movie }}</li>
-              {% endfor %}
-            </ul>
-          </li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% endif %}
+
+            {% if analytics_data.min_max_movies_by_trial.0 %}
+            <li>Least guessed movie(s) at trial {{ analytics_data.trial }}:
+              <ul>
+                {% for movie in analytics_data.min_max_movies_by_trial.0 %}
+                  <li>{{ movie }}</li>
+                {% endfor %}
+              </ul>
+            </li>
+            {% endif %}
           {% endif %}
 
         </ul>
