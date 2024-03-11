@@ -20,6 +20,7 @@ from .models import (
     FeedbackSubject,
     Guess,
     UserActivity,
+    User,
 )
 
 # Register your models here.
@@ -200,3 +201,19 @@ class UserActivityAdmin(AnalyticsMixin, ImportExportMixin, admin.ModelAdmin):
 
     winner_display.boolean = True
     winner_display.short_description = "winner"
+
+
+@admin.register(User)
+class UserAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ("id", "uuid", "email")
+    list_display_links = list_display
+    search_fields = ("uuid", "email")
+    
+    def has_add_permission(self, request):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False

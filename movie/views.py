@@ -91,6 +91,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             mystery_movie = Archive.objects.get(date=date)
             data = self.get_serializer(mystery_movie.movie).data
             data["id"] = mystery_movie.id
+            data["movie_id"] = mystery_movie.movie.id
             return Response(data, status=200)
 
         else:
@@ -254,6 +255,37 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def create_user(self, request):
         user = User.objects.create()
+        data = self.get_serializer(user).data
+        return Response(data, status=200)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="save-email",
+        name="Save Email",
+    )
+    def save_email(self, request):
+        uuid = request.data.get("uuid", None)
+        email = request.data.get("email", None)
+
+        if email == None:
+            raise exceptions.ValidationError(
+                {"email": ["This field may not be blank."]}, "blank"
+            )
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if uuid != None:
+            user = User.objects.filter(uuid=uuid)
+            if not user.exists():
+                raise exceptions.NotFound("Not found.", "not_found")
+            user = user.first()
+            user.email = email
+            user.save()
+        else:
+            user = User.objects.create(email=email)
+        
         data = self.get_serializer(user).data
         return Response(data, status=200)
 

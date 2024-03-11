@@ -169,6 +169,7 @@ class Feedback(models.Model):
 
 class User(models.Model):
     uuid = models.UUIDField("User ID", default=uuid.uuid4, unique=True, editable=False)
+    email = models.EmailField("User Email", blank=True, null=True)
 
     def __str__(self):
         return str(self.uuid)
