@@ -6,6 +6,7 @@ import random
 
 from .resources import MovieResource, UserActivityResource
 from .mixins import AnalyticsMixin, ArchiveMixin
+from .forms import SelectiveExportForm
 from .models import (
     Genre,
     Cast,
@@ -180,7 +181,18 @@ class UserActivityAdmin(AnalyticsMixin, ImportExportMixin, admin.ModelAdmin):
     search_fields = ("user__uuid",)
     readonly_fields = ("guessed_movies_count", "total_time", "winner_display")
     inlines = [GuessInline]
+    ordering = ("-start_time",)
     resource_class = UserActivityResource
+    export_form_class = SelectiveExportForm
+
+    def get_export_resource_kwargs(self, request, *args, **kwargs):
+        export_form = kwargs["export_form"]
+        if export_form:
+            return {
+                "start_date": export_form.cleaned_data.get("start_date"),
+                "end_date": export_form.cleaned_data.get("end_date"),
+            }
+        return {}
 
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = [field.name for field in self.model._meta.fields]
@@ -208,12 +220,12 @@ class UserAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ("id", "uuid", "email")
     list_display_links = list_display
     search_fields = ("uuid", "email")
-    
+
     def has_add_permission(self, request):
         return False
-    
+
     def has_change_permission(self, request, obj=None):
         return False
-    
+
     def has_delete_permission(self, request, obj=None):
         return False

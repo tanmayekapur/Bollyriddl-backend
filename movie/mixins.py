@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.urls import path, reverse
 from datetime import datetime, timedelta
 from django.http import HttpResponseRedirect
+from .forms import AnalyticsForm, ArchiveForm
 from import_export.resources import ModelResource
 from django.template.response import TemplateResponse
 from .models import Movie, Archive, UserActivity, Guess
@@ -40,28 +41,6 @@ class RelatedResourceMixin(ModelResource):
         else:
             # Use the default behavior for other fields
             super().import_field(field, obj, data)
-
-
-class AnalyticsForm(forms.Form):
-    CHOICES = (
-        ("guess_count", "No. of times any movie is guessed on given date"),
-        ("min_max_movies_by_trial", "Most & Least guessed movie at given trial"),
-        ("min_max_movies_by_date", "Most & Least guessed movie on given date"),
-        (
-            "time_taken",
-            "Minimum, mean and median time taken in given guesses and date",
-        ),
-        ("guesses_count", "Minimum, mean and median guesses on given date"),
-    )
-    analytics_choice = forms.ChoiceField(label="Analytics Choice", choices=CHOICES)
-    # movie = forms.ModelChoiceField(
-    #     label="Movie",
-    #     queryset=Movie.objects.all().order_by("-id"),
-    #     widget=forms.Select(attrs={"autocomplete": "off"}),
-    # )
-    # guesses = forms.IntegerField(label="Number of Guesses", min_value=0)
-    # trial = forms.IntegerField(label="Trial", min_value=0)
-    # date = forms.DateField(label="Date", widget=AdminDateWidget())
 
 
 class AnalyticsMixin:
@@ -342,15 +321,6 @@ class AnalyticsMixin:
                 res["guesses_count"] = self.guesses_count(form_data)
 
         return res
-
-
-class ArchiveForm(forms.Form):
-    date = forms.DateField(label="Date", widget=AdminDateWidget())
-    movies = forms.ModelMultipleChoiceField(
-        label="Movies",
-        queryset=Movie.objects.all().order_by("-id"),
-        widget=FilteredSelectMultiple("Movies", is_stacked=False),
-    )
 
 
 class ArchiveMixin:

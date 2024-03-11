@@ -115,3 +115,15 @@ class UserActivitySerializer(serializers.ModelSerializer):
                 user_activity=user_activity, order=order, **guessed_movie
             )
         return user_activity
+
+    def update(self, instance, validated_data):
+        if "user" in validated_data:
+            validated_data.pop("user")
+
+        if "archive" in validated_data:
+            validated_data.pop("archive")
+
+        if "guessed_movies" in validated_data:
+            validated_data.pop("guessed_movies")
+
+        return super().update(instance, validated_data)

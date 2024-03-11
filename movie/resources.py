@@ -1,6 +1,7 @@
 from import_export import resources, fields
 from .mixins import RelatedResourceMixin
 from .models import Movie, UserActivity
+from django.utils import timezone
 
 
 class MovieResource(RelatedResourceMixin):
@@ -33,21 +34,32 @@ class UserActivityResource(resources.ModelResource):
     Resource class for UserActivity model.
     """
 
-    id = fields.Field(column_name="session_id")
+    id = fields.Field("id", column_name="session_id")
     user_id = fields.Field(column_name="user_id")
-    start_date = fields.Field(column_name="date")
-    start_time = fields.Field(column_name="time")
-    total_time = fields.Field(column_name="duration")
-    winner = fields.Field(column_name="winner_status")
+    start_date = fields.Field(column_name="start_date")
+    end_date = fields.Field(column_name="end_date")
+    total_time = fields.Field("total_time", column_name="duration")
+    winner = fields.Field("winner", column_name="winner_status")
+    is_replayed = fields.Field("is_replayed", column_name="replayed_status")
+    is_shared = fields.Field("is_shared", column_name="shared_status")
+    lifelines_used = fields.Field(column_name="lifelines_used")
     archive_id = fields.Field(column_name="game_number")
+    guess_count = fields.Field("guessed_movies_count", column_name="guess_count")
     guessed_movies = fields.Field(column_name="guessed_movies")
-    guess_count = fields.Field(column_name="guess_count")
+    time_taken = fields.Field(column_name="time_taken")
 
     class Meta:
         model = UserActivity
 
-    def dehydrate_id(self, obj):
-        return obj.id
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.filter_start_date = kwargs.get("start_date")
+        self.filter_end_date = kwargs.get("end_date")
+
+    def filter_export(self, queryset, *args, **kwargs):
+        return queryset.filter(
+            start_time__date__range=(self.filter_start_date, self.filter_end_date)
+        ).order_by("-start_time")
 
     def dehydrate_user_id(self, obj):
         return obj.user.uuid
@@ -55,35 +67,42 @@ class UserActivityResource(resources.ModelResource):
     def dehydrate_archive_id(self, obj):
         return obj.archive.id
 
-    def dehydrate_total_time(self, obj):
-        return obj.total_time
-
     def dehydrate_start_date(self, obj):
-        return obj.start_time.date()
+        return timezone.localtime(obj.start_time)
 
-    def dehydrate_start_time(self, obj):
-        return obj.start_time.time()
+    def dehydrate_end_date(self, obj):
+        return timezone.localtime(obj.end_time)
 
-    def dehydrate_winner(self, obj):
-        return obj.winner
-
-    def dehydrate_guess_count(self, obj):
-        return obj.guessed_movies_count
+    def dehydrate_lifelines_used(self, obj):
+        lifelines_used = obj.lifelines_used
+        lifelines_used = list(map(lambda x: str(x), lifelines_used))
+        return ", ".join(lifelines_used)
 
     def dehydrate_guessed_movies(self, obj):
         guessed_movies = list(obj.guessed_movies.all().values_list("id", flat=True))
         guessed_movies = list(map(lambda x: str(x), guessed_movies))
         return ", ".join(guessed_movies)
 
+    def dehydrate_time_taken(self, obj):
+        guesses = list(
+            obj.guess_set.all().order_by("order").values_list("time_taken", flat=True)
+        )
+        guesses = list(map(lambda x: str(x), guesses))
+        return ", ".join(guesses)
+
     def get_export_order(self):
         return (
             "id",
             "user_id",
             "start_date",
-            "start_time",
+            "end_date",
             "archive_id",
             "total_time",
             "guess_count",
             "winner",
+            "is_replayed",
+            "is_shared",
+            "lifelines_used",
             "guessed_movies",
+            "time_taken",
         )

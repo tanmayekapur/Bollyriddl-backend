@@ -238,7 +238,7 @@ class FeedbackSubjectViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]
     http_method_names = ["get", "head"]
 
     def get_queryset(self):
@@ -285,7 +285,7 @@ class UserViewSet(viewsets.ModelViewSet):
             user.save()
         else:
             user = User.objects.create(email=email)
-        
+
         data = self.get_serializer(user).data
         return Response(data, status=200)
 
@@ -294,4 +294,4 @@ class UserActivityViewSet(viewsets.ModelViewSet):
     queryset = UserActivity.objects.all()
     serializer_class = UserActivitySerializer
     permission_classes = [permissions.AllowAny]
-    http_method_names = ["post", "head"]
+    http_method_names = ["post", "patch", "head"]

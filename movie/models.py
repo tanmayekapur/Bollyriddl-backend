@@ -1,4 +1,5 @@
 from sortedm2m.fields import SortedManyToManyField
+from django.contrib.postgres import fields
 from django.db import models
 import uuid
 
@@ -193,6 +194,11 @@ class Guess(models.Model):
 class UserActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     archive = models.ForeignKey(Archive, on_delete=models.CASCADE)
+    is_replayed = models.BooleanField("Replayed Status", default=False)
+    is_shared = models.BooleanField("Shared Status", default=False)
+    lifelines_used = fields.ArrayField(
+        base_field=models.IntegerField(), verbose_name="Lifelines Used", default=list
+    )
     guessed_movies = SortedManyToManyField(
         Movie,
         through=Guess,
