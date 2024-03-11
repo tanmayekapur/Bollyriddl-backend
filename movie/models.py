@@ -204,9 +204,10 @@ class UserActivity(models.Model):
         through=Guess,
         verbose_name="Guessed Movies",
         sort_value_field_name="order",
+        blank=True,
     )
-    start_time = models.DateTimeField("Start Time")
-    end_time = models.DateTimeField("End Time")
+    start_time = models.DateTimeField("Start Time", blank=True, null=True)
+    end_time = models.DateTimeField("End Time", blank=True, null=True)
 
     @property
     def guessed_movies_count(self):

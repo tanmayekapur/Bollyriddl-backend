@@ -66,7 +66,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserActivitySerializer(serializers.ModelSerializer):
     guessed_movies = GuessSerializer(
-        many=True, required=True, allow_empty=False, write_only=True
+        many=True, required=False, allow_empty=True, write_only=True
     )
 
     class Meta:
@@ -108,22 +108,20 @@ class UserActivitySerializer(serializers.ModelSerializer):
         return repr
 
     def create(self, validated_data):
-        guessed_movies = validated_data.pop("guessed_movies")
-        user_activity = UserActivity.objects.create(**validated_data)
-        for order, guessed_movie in enumerate(guessed_movies):
-            Guess.objects.create(
-                user_activity=user_activity, order=order, **guessed_movie
-            )
+        if "guessed_movies" in validated_data:
+            guessed_movies = validated_data.pop("guessed_movies")
+            user_activity = UserActivity.objects.create(**validated_data)
+            for order, guessed_movie in enumerate(guessed_movies):
+                Guess.objects.create(
+                    user_activity=user_activity, order=order, **guessed_movie
+                )
         return user_activity
 
     def update(self, instance, validated_data):
-        if "user" in validated_data:
-            validated_data.pop("user")
-
-        if "archive" in validated_data:
-            validated_data.pop("archive")
-
         if "guessed_movies" in validated_data:
-            validated_data.pop("guessed_movies")
-
+            guessed_movies = validated_data.pop("guessed_movies")
+            for order, guessed_movie in enumerate(guessed_movies):
+                Guess.objects.update_or_create(
+                    user_activity=instance, order=order, defaults=guessed_movie
+                )
         return super().update(instance, validated_data)
