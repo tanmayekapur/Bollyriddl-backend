@@ -215,13 +215,16 @@ class UserActivity(models.Model):
 
     @property
     def total_time(self):
-        return self.end_time - self.start_time
+        if self.start_time and self.end_time:
+            return self.end_time - self.start_time
+        return None
 
     @property
     def winner(self):
         mystery_movie = self.archive.movie
-        if self.guess_set.last().movie.id == mystery_movie.id:
-            return True
+        if self.guess_set.count() != 0:
+            if self.guess_set.last().movie.id == mystery_movie.id:
+                return True
         return False
 
     class Meta:
