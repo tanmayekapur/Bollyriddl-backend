@@ -108,9 +108,13 @@ class UserActivitySerializer(serializers.ModelSerializer):
         return repr
 
     def create(self, validated_data):
+        guessed_movies = None
         if "guessed_movies" in validated_data:
             guessed_movies = validated_data.pop("guessed_movies")
-            user_activity = UserActivity.objects.create(**validated_data)
+
+        user_activity = UserActivity.objects.create(**validated_data)
+
+        if guessed_movies is not None:
             for order, guessed_movie in enumerate(guessed_movies):
                 Guess.objects.create(
                     user_activity=user_activity, order=order, **guessed_movie
