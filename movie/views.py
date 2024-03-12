@@ -239,7 +239,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
-    http_method_names = ["get", "head"]
+    http_method_names = ["get", "post", "head"]
 
     def get_queryset(self):
         raise exceptions.NotFound("Not found.", "not_found")
