@@ -57,9 +57,12 @@ class UserActivityResource(resources.ModelResource):
         self.filter_end_date = kwargs.get("end_date")
 
     def filter_export(self, queryset, *args, **kwargs):
-        return queryset.filter(
-            start_time__date__range=(self.filter_start_date, self.filter_end_date)
-        ).order_by("-start_time")
+        queryset = queryset.order_by("-start_time")
+        if self.filter_start_date and self.filter_end_date:
+            return queryset.filter(
+                start_time__date__range=(self.filter_start_date, self.filter_end_date)
+            )
+        return queryset
 
     def dehydrate_user_id(self, obj):
         return obj.user.uuid
@@ -68,9 +71,13 @@ class UserActivityResource(resources.ModelResource):
         return obj.archive.id
 
     def dehydrate_start_date(self, obj):
+        if obj.start_time is None:
+            return None
         return timezone.localtime(obj.start_time)
 
     def dehydrate_end_date(self, obj):
+        if obj.end_time is None:
+            return None
         return timezone.localtime(obj.end_time)
 
     def dehydrate_lifelines_used(self, obj):

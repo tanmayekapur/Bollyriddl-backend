@@ -30,20 +30,29 @@ class ArchiveForm(forms.Form):
 class SelectiveExportForm(ExportForm):
     start_date = forms.DateField(
         label="Start Date",
-        required=True,
+        required=False,
         widget=forms.DateInput(attrs={"type": "date"}),
     )
     end_date = forms.DateField(
-        label="End Date", required=True, widget=forms.DateInput(attrs={"type": "date"})
+        label="End Date", required=False, widget=forms.DateInput(attrs={"type": "date"})
     )
 
     def clean(self):
         cleaned_data = super().clean()
-        start_date = cleaned_data.get("start_date")
-        end_date = cleaned_data.get("end_date")
+        start_date = cleaned_data.get("start_date", None)
+        end_date = cleaned_data.get("end_date", None)
 
-        if start_date > end_date:
-            self.add_error("start_date", "Start Date cannot be greater than End Date")
-        if end_date < start_date:
-            self.add_error("end_date", "End Date cannot be less than Start Date")
+        if start_date is not None and end_date is None:
+            cleaned_data["end_date"] = start_date
+
+        if start_date is None and end_date is not None:
+            cleaned_data["start_date"] = end_date
+
+        if start_date is not None and end_date is not None:
+            if start_date > end_date:
+                self.add_error(
+                    "start_date", "Start Date cannot be greater than End Date"
+                )
+            if end_date < start_date:
+                self.add_error("end_date", "End Date cannot be less than Start Date")
         return cleaned_data

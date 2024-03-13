@@ -174,12 +174,14 @@ class UserActivityAdmin(AnalyticsMixin, ImportExportMixin, admin.ModelAdmin):
         "start_time",
         "archive_id",
         "total_time",
-        "guessed_movies_count",
+        "guessed_movies_count_display",
         "winner_display",
+        "is_replayed",
+        "is_shared",
     )
     list_display_links = list_display
     search_fields = ("user__uuid",)
-    readonly_fields = ("guessed_movies_count", "total_time", "winner_display")
+    readonly_fields = ("guessed_movies_count_display", "total_time", "winner_display")
     inlines = [GuessInline]
     ordering = ("-start_time",)
     resource_class = UserActivityResource
@@ -211,8 +213,12 @@ class UserActivityAdmin(AnalyticsMixin, ImportExportMixin, admin.ModelAdmin):
     def winner_display(self, obj):
         return obj.winner
 
+    def guessed_movies_count_display(self, obj):
+        return obj.guessed_movies_count
+
     winner_display.boolean = True
     winner_display.short_description = "winner"
+    guessed_movies_count_display.short_description = "guess count"
 
 
 @admin.register(User)
