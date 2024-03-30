@@ -92,10 +92,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             data = self.get_serializer(mystery_movie.movie).data
             data["id"] = mystery_movie.id
             data["movie_id"] = mystery_movie.movie.id
-            last_archive = Archive.objects.order_by("-date").first()
-            total_count = Archive.objects.count()
-            toady_archive_id = total_count - (last_archive.date - today).days
-            data["today_archive_id"] = toady_archive_id
+            data["today_archive_id"] = mystery_movie.archive_id
             return Response(data, status=200)
 
         else:

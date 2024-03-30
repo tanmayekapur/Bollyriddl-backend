@@ -132,6 +132,13 @@ class Archive(models.Model):
     def __str__(self):
         return f"{self.date} - {self.movie}"
 
+    @property
+    def archive_id(self):
+        last_archive = Archive.objects.order_by("-date").first()
+        total_count = Archive.objects.count()
+        archive_id = total_count - (last_archive.date - self.date).days
+        return archive_id
+
 
 class Contact(models.Model):
     name = models.CharField("Name", max_length=255)

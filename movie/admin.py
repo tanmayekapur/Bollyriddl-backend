@@ -110,7 +110,7 @@ class MovieAdmin(ImportExportMixin, admin.ModelAdmin):
 
 @admin.register(Archive)
 class ArchiveAdmin(ArchiveMixin, ImportExportMixin, admin.ModelAdmin):
-    list_display = ("id", "date", "movie")
+    list_display = ("id", "archive_id", "date", "movie")
     list_display_links = list_display
     search_fields = ("date", "movie__name")
     ordering = ("-date",)
