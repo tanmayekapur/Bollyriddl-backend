@@ -43,7 +43,8 @@ class UserActivityResource(resources.ModelResource):
     is_replayed = fields.Field("is_replayed", column_name="replayed_status")
     is_shared = fields.Field("is_shared", column_name="shared_status")
     lifelines_used = fields.Field(column_name="lifelines_used")
-    archive_id = fields.Field(column_name="game_number")
+    game_number = fields.Field(column_name="game_number")
+    archive_id = fields.Field(column_name="archive_id")
     guess_count = fields.Field("guessed_movies_count", column_name="guess_count")
     guessed_movies = fields.Field(column_name="guessed_movies")
     time_taken = fields.Field(column_name="time_taken")
@@ -67,8 +68,11 @@ class UserActivityResource(resources.ModelResource):
     def dehydrate_user_id(self, obj):
         return obj.user.uuid
 
-    def dehydrate_archive_id(self, obj):
+    def dehydrate_game_number(self, obj):
         return obj.archive.id
+
+    def dehydrate_archive_id(self, obj):
+        return obj.archive.archive_id
 
     def dehydrate_start_date(self, obj):
         if obj.start_time is None:
@@ -103,6 +107,7 @@ class UserActivityResource(resources.ModelResource):
             "user_id",
             "start_date",
             "end_date",
+            "game_number",
             "archive_id",
             "total_time",
             "guess_count",
