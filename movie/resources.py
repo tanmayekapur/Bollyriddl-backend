@@ -1,6 +1,6 @@
 from import_export import resources, fields
 from .mixins import RelatedResourceMixin
-from .models import Movie, UserActivity
+from .models import Movie, UserActivity, Archive
 from django.utils import timezone
 
 
@@ -113,3 +113,17 @@ class UserActivityResource(resources.ModelResource):
             "guessed_movies",
             "time_taken",
         )
+
+
+class ArchiveResource(resources.ModelResource):
+    """
+    Resource class for Archive model.
+    """
+
+    archive_id = fields.Field(column_name="archive_id")
+
+    class Meta:
+        model = Archive
+
+    def dehydrate_archive_id(self, obj):
+        return obj.archive_id

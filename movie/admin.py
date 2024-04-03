@@ -4,7 +4,7 @@ from django.contrib import admin, messages
 import datetime
 import random
 
-from .resources import MovieResource, UserActivityResource
+from .resources import MovieResource, UserActivityResource, ArchiveResource
 from .mixins import AnalyticsMixin, ArchiveMixin
 from .forms import SelectiveExportForm
 from .models import (
@@ -115,6 +115,7 @@ class ArchiveAdmin(ArchiveMixin, ImportExportMixin, admin.ModelAdmin):
     search_fields = ("date", "movie__name")
     ordering = ("-date",)
     autocomplete_fields = ("movie",)
+    resource_class = ArchiveResource
 
 
 @admin.register(Contact)
