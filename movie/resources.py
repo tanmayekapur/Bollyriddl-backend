@@ -26,6 +26,19 @@ class MovieResource(RelatedResourceMixin):
             if Movie.objects.filter(imdb_id=imdb_id).exists():
                 row["id"] = Movie.objects.get(imdb_id=imdb_id).id
 
+        if 'genres' in row:
+            row['genres'] = [string.title() for string in row.get("genres", [])]
+        if 'cast' in row:
+            row['cast'] = [string.title() for string in row.get("cast", [])]
+        if 'writers' in row:
+            row['writers'] = [string.title() for string in row.get("writers", [])]
+        if 'directors' in row:
+            row['directors'] = [string.title() for string in row.get("directors", [])]
+        if 'music_directors' in row:
+            row['music_directors'] = [string.title() for string in row.get("music_directors", [])]
+        if 'production_houses' in row:
+            row['production_houses'] = [string.title() for string in row.get("production_houses", [])]
+
         super().before_import_row(row, **kwargs)
 
 
