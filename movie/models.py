@@ -136,8 +136,9 @@ class Archive(models.Model):
     def archive_id(self):
         last_archive = Archive.objects.order_by("-date").first()
         total_count = Archive.objects.count()
-        archive_id = total_count - (last_archive.date - self.date).days
-        return archive_id
+        if self.date:
+            return total_count - (last_archive.date - self.date).days
+        return last_archive.archive_id
 
 
 class Contact(models.Model):
