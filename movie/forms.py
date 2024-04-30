@@ -4,6 +4,7 @@ from import_export.forms import ExportForm
 from django.contrib.admin.widgets import FilteredSelectMultiple, AdminDateWidget
 
 
+# Form for selecting analytics options
 class AnalyticsForm(forms.Form):
     CHOICES = (
         ("guess_count", "No. of times any movie is guessed on given date"),
@@ -18,6 +19,7 @@ class AnalyticsForm(forms.Form):
     analytics_choice = forms.ChoiceField(label="Analytics Choice", choices=CHOICES)
 
 
+# Form for selecting date and movies for archiving
 class ArchiveForm(forms.Form):
     date = forms.DateField(label="Date", widget=AdminDateWidget())
     movies = forms.ModelMultipleChoiceField(
@@ -27,6 +29,7 @@ class ArchiveForm(forms.Form):
     )
 
 
+# Form for selective export with start and end date options
 class SelectiveExportForm(ExportForm):
     start_date = forms.DateField(
         label="Start Date",
@@ -42,6 +45,7 @@ class SelectiveExportForm(ExportForm):
         start_date = cleaned_data.get("start_date", None)
         end_date = cleaned_data.get("end_date", None)
 
+        # Ensure start date is not greater than end date and vice versa
         if start_date is not None and end_date is None:
             cleaned_data["end_date"] = start_date
 

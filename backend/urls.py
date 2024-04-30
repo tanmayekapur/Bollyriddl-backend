@@ -29,7 +29,10 @@ from movie.views import (
     UserActivityViewSet,
 )
 
+# Initialize the Django REST Framework router
 router = routers.DefaultRouter()
+
+# Register viewsets with the router
 router.register(r"movies", MovieViewSet)
 router.register(r"contact", ContactViewSet)
 router.register(r"feedback", FeedbackViewSet)
@@ -37,7 +40,12 @@ router.register(r"feedback-subjects", FeedbackSubjectViewSet)
 router.register(r"user", UserViewSet)
 router.register(r"user-activity", UserActivityViewSet)
 
+# Define URL patterns
 urlpatterns = [
+    # Admin URL
     path("admin/", admin.site.urls),
+    # API URL includes the router URLs
     path("api/", include(router.urls)),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(
+    settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
+)  # Serve media files during development

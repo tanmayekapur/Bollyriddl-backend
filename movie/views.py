@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
 
-from .filters import PriorizedSearchFilter
-from .serializers import (
+from .filters import PriorizedSearchFilter  # Importing custom filter
+from .serializers import (  # Importing serializers
     MovieSerializer,
     ContactSerializer,
     FeedbackSerializer,
@@ -13,7 +13,7 @@ from .serializers import (
     UserSerializer,
     UserActivitySerializer,
 )
-from .models import (
+from .models import (  # Importing models
     Movie,
     Archive,
     Contact,
@@ -26,24 +26,36 @@ from .models import (
 # Create your views here.
 
 
+# ViewSet for handling Movie model operations
 class MovieViewSet(viewsets.ModelViewSet):
+    # Queryset for retrieving all Movie objects
     queryset = Movie.objects.all()
+    # Serializer class to use for Movie objects
     serializer_class = MovieSerializer
+    # Permission classes to check for Movie operations
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    # HTTP methods allowed for Movie operations
     http_method_names = ["get", "head"]
+    # Default size for search results
     search_size = 10
+    # Fields to search for Movie objects
     search_fields = ["^name", "name"]
+    # Fields to order Movie objects
     ordering_fields = ["name"]
 
+    # Custom method to override default behavior for retrieving a single object
     def get_object(self):
+        # If the action is 'get_hint', query Archive objects instead of Movie objects
         if self.action == "get_hint":
             self.queryset = Archive.objects.all()
 
         return super().get_object()
 
+    # Custom method to filter queryset based on action
     def filter_queryset(self, queryset):
         filter_backends = []
 
+        # Modify filter backends based on action
         for filter_backend in self.filter_backends:
             if filter_backend is SearchFilter:
                 filter_backends.append(PriorizedSearchFilter)
@@ -53,11 +65,13 @@ class MovieViewSet(viewsets.ModelViewSet):
         self.filter_backends = filter_backends
         queryset = super().filter_queryset(queryset)
 
+        # Limit queryset size for 'list' action
         if self.action == "list":
             return queryset[: self.search_size]
 
         return queryset
 
+    # Custom action to get mystery movie for a given date
     @action(
         detail=False,
         methods=["get"],
@@ -69,6 +83,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         date = request.query_params.get("date")
         iso_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
+        # Parse and validate date
         if date:
             try:
                 tz = timezone.get_current_timezone()
@@ -87,6 +102,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         else:
             date = today
 
+        # Check if mystery movie exists for given date
         if Archive.objects.filter(date=date).exists() and date <= today:
             mystery_movie = Archive.objects.get(date=date)
             data = self.get_serializer(mystery_movie.movie).data
@@ -98,6 +114,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         else:
             raise exceptions.NotFound("Not found.", "not_found")
 
+    # Custom action to get hint for a movie attribute
     @action(
         detail=True,
         methods=["get"],
@@ -119,6 +136,7 @@ class MovieViewSet(viewsets.ModelViewSet):
 
         validation_errors = {}
 
+        # Validate query parameters
         if not id:
             validation_errors["id"] = ["This field may not be blank."]
 
@@ -139,12 +157,14 @@ class MovieViewSet(viewsets.ModelViewSet):
         if validation_errors:
             raise exceptions.ValidationError(validation_errors, "invalid")
 
+        # Retrieve value for the specified key
         if getattr(movie, key).filter(id=id).exists():
             value = getattr(movie, key).get(id=id)
             return Response(value.name, status=200)
         else:
             raise exceptions.NotFound("Not found.", "not_found")
 
+    # Custom action to match guessed movie with mystery movie for a given date
     @action(
         detail=True,
         methods=["get"],
@@ -156,6 +176,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         iso_format = "%Y-%m-%dT%H:%M:%S.%fZ"
         validation_errors = {}
 
+        # Validate query parameters
         if not date:
             validation_errors["date"] = ["This field may not be blank."]
 
@@ -188,6 +209,7 @@ class MovieViewSet(viewsets.ModelViewSet):
         guessed_movie = self.get_object()
         data = self.get_serializer(guessed_movie).data
 
+        # Check if guessed movie matches mystery movie
         if guessed_movie == mystery_movie.movie:
             data["message"] = "Movie matched."
             data["matched"] = True
@@ -199,6 +221,7 @@ class MovieViewSet(viewsets.ModelViewSet):
             data["matched"] = False
             common_data = {}
 
+            # Find common data between guessed and mystery movies
             for key, value in data.items():
                 if isinstance(value, list):
                     common_data[key] = [
@@ -212,42 +235,63 @@ class MovieViewSet(viewsets.ModelViewSet):
             return Response(common_data, status=200)
 
 
+# ViewSet for handling Contact model operations
 class ContactViewSet(viewsets.ModelViewSet):
-    queryset = Contact.objects.all()
-    serializer_class = ContactSerializer
-    permission_classes = [permissions.AllowAny]
-    http_method_names = ["post", "head"]
+    queryset = Contact.objects.all()  # Queryset for retrieving all Contact objects
+    serializer_class = ContactSerializer  # Serializer class for Contact objects
+    permission_classes = [permissions.AllowAny]  # Permissions for Contact operations
+    http_method_names = ["post", "head"]  # HTTP methods allowed for Contact operations
 
 
+# ViewSet for handling Feedback model operations
 class FeedbackViewSet(viewsets.ModelViewSet):
-    queryset = Feedback.objects.all()
-    serializer_class = FeedbackSerializer
-    permission_classes = [permissions.AllowAny]
-    http_method_names = ["post", "head"]
+    queryset = Feedback.objects.all()  # Queryset for retrieving all Feedback objects
+    serializer_class = FeedbackSerializer  # Serializer class for Feedback objects
+    permission_classes = [permissions.AllowAny]  # Permissions for Feedback operations
+    http_method_names = ["post", "head"]  # HTTP methods allowed for Feedback operations
 
 
+# ViewSet for handling FeedbackSubject model operations
 class FeedbackSubjectViewSet(viewsets.ModelViewSet):
-    queryset = FeedbackSubject.objects.all()
-    serializer_class = FeedbackSubjectSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    http_method_names = ["get", "head"]
+    queryset = (
+        FeedbackSubject.objects.all()
+    )  # Queryset for retrieving all FeedbackSubject objects
+    serializer_class = (
+        FeedbackSubjectSerializer  # Serializer class for FeedbackSubject objects
+    )
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly
+    ]  # Permissions for FeedbackSubject operations
+    http_method_names = [
+        "get",
+        "head",
+    ]  # HTTP methods allowed for FeedbackSubject operations
 
+    # Custom method to raise NotFound exception when trying to retrieve an object
     def get_object(self):
         raise exceptions.NotFound("Not found.", "not_found")
 
 
+# ViewSet for handling User model operations
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
-    http_method_names = ["get", "post", "head"]
+    queryset = User.objects.all()  # Queryset for retrieving all User objects
+    serializer_class = UserSerializer  # Serializer class for User objects
+    permission_classes = [permissions.AllowAny]  # Permissions for User operations
+    http_method_names = [
+        "get",
+        "post",
+        "head",
+    ]  # HTTP methods allowed for User operations
 
+    # Custom method to raise NotFound exception when trying to retrieve queryset
     def get_queryset(self):
         raise exceptions.NotFound("Not found.", "not_found")
 
+    # Custom method to raise NotFound exception when trying to retrieve an object
     def get_object(self):
         raise exceptions.NotFound("Not found.", "not_found")
 
+    # Custom action to create a new user
     @action(
         detail=False,
         methods=["get"],
@@ -255,10 +299,11 @@ class UserViewSet(viewsets.ModelViewSet):
         name="Create User",
     )
     def create_user(self, request):
-        user = User.objects.create()
-        data = self.get_serializer(user).data
-        return Response(data, status=200)
+        user = User.objects.create()  # Create a new User object
+        data = self.get_serializer(user).data  # Serialize User object data
+        return Response(data, status=200)  # Return serialized data with success status
 
+    # Custom action to save user email
     @action(
         detail=False,
         methods=["post"],
@@ -266,33 +311,45 @@ class UserViewSet(viewsets.ModelViewSet):
         name="Save Email",
     )
     def save_email(self, request):
-        uuid = request.data.get("uuid", None)
-        email = request.data.get("email", None)
+        uuid = request.data.get("uuid", None)  # Get UUID from request data
+        email = request.data.get("email", None)  # Get email from request data
 
+        # Validate email field
         if email == None:
             raise exceptions.ValidationError(
                 {"email": ["This field may not be blank."]}, "blank"
             )
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        serializer = self.get_serializer(data=request.data)  # Get serializer instance
+        serializer.is_valid(raise_exception=True)  # Validate serializer data
 
+        # Update or create user email based on UUID
         if uuid != None:
-            user = User.objects.filter(uuid=uuid)
-            if not user.exists():
+            user = User.objects.filter(uuid=uuid).first()  # Get user by UUID
+            if user is None:
                 raise exceptions.NotFound("Not found.", "not_found")
-            user = user.first()
-            user.email = email
-            user.save()
+            user.email = email  # Update user email
+            user.save()  # Save user
         else:
-            user = User.objects.create(email=email)
+            user = User.objects.create(email=email)  # Create new user with email
 
-        data = self.get_serializer(user).data
-        return Response(data, status=200)
+        data = self.get_serializer(user).data  # Serialize user data
+        return Response(data, status=200)  # Return serialized data with success status
 
 
+# ViewSet for handling UserActivity model operations
 class UserActivityViewSet(viewsets.ModelViewSet):
-    queryset = UserActivity.objects.all()
-    serializer_class = UserActivitySerializer
-    permission_classes = [permissions.AllowAny]
-    http_method_names = ["post", "patch", "head"]
+    queryset = (
+        UserActivity.objects.all()
+    )  # Queryset for retrieving all UserActivity objects
+    serializer_class = (
+        UserActivitySerializer  # Serializer class for UserActivity objects
+    )
+    permission_classes = [
+        permissions.AllowAny
+    ]  # Permissions for UserActivity operations
+    http_method_names = [
+        "post",
+        "patch",
+        "head",
+    ]  # HTTP methods allowed for UserActivity operations

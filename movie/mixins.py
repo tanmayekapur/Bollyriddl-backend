@@ -13,6 +13,7 @@ from .models import Movie, Archive, UserActivity, Guess
 from django.contrib.admin.widgets import FilteredSelectMultiple, AdminDateWidget
 
 
+# Mixin to handle importing related fields with many-to-many relationships
 class RelatedResourceMixin(ModelResource):
     """
     A mixin to handle importing related fields with many-to-many relationships.
@@ -44,18 +45,22 @@ class RelatedResourceMixin(ModelResource):
 
 
 class AnalyticsMixin:
+    # Default templates and form class
     analytics_change_list_template = "admin/analytics/change_list_analytics.html"
     analytics_template_name = "admin/analytics/analytics.html"
     analytics_form_class = AnalyticsForm
 
+    # Constructor
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.change_list_template = self.analytics_change_list_template
 
+    # Get model information
     def get_model_info(self):
         app_label = self.model._meta.app_label
         return (app_label, self.model._meta.model_name)
 
+    # Get URLs for analytics
     def get_urls(self):
         urls = super().get_urls()
         info = self.get_model_info()
@@ -68,17 +73,13 @@ class AnalyticsMixin:
         ]
         return my_urls + urls
 
+    # Analytics view
     def analytics(self, request, *args, **kwargs):
         context = {
             "today_analytics": self.get_today_analytics(),
         }
 
-        try:
-            if set(context["today_analytics"].values()) == {(None, None), None, 7}:
-                context["today_analytics"] = None
-        except:
-            pass
-
+        # Handle form submission
         if request.method == "POST":
             analytics_form = AnalyticsForm(request.POST)
             if analytics_form.is_valid():
@@ -91,9 +92,11 @@ class AnalyticsMixin:
                     }
                 )
         else:
+            # If not a POST request, initialize form
             self.remove_fields()
             analytics_form = AnalyticsForm()
 
+        # Update context with form and other data
         context.update(self.admin_site.each_context(request))
         context.update(
             {
@@ -107,98 +110,7 @@ class AnalyticsMixin:
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.analytics_template_name], context)
 
-    def guess_count(self, form_data):
-        movie = form_data["movie"]
-        date = form_data["date"]
-
-        if not movie:
-            return None
-
-        if not isinstance(movie, Movie):
-            movie = movie[0]
-
-        guess_count = UserActivity.objects.filter(
-            guessed_movies__id=movie.id, start_time__date=date
-        ).count()
-        return guess_count
-
-    def min_max_movies(self, form_data, target, by):
-        if "trial" in form_data:
-            trial = form_data["trial"] - 1
-        if "date" in form_data:
-            date = form_data["date"]
-
-        if by == "trial":
-            guesses = Guess.objects.filter(order=trial)
-
-        if by == "date":
-            guesses = Guess.objects.filter(user_activity__start_time__date=date)
-
-        if not guesses.exists():
-            return None
-
-        movie_idx = list(guesses.values_list("movie__id", flat=True))
-        occurences = Counter(movie_idx)
-
-        occurence = target(occurences.values())
-        movies = []
-
-        for key in occurences.keys():
-            if occurences[key] == occurence:
-                movies.append(key)
-
-        movies = list(map(lambda x: Movie.objects.get(id=x).name, movies))
-        return movies
-
-    def time_taken(self, form_data):
-        date = form_data["date"]
-        guesses = form_data["guesses"]
-
-        user_activities = UserActivity.objects.filter(start_time__date=date)
-        filtered_user_activities = [
-            user_activity
-            for user_activity in user_activities
-            if user_activity.guessed_movies_count == guesses and user_activity.winner
-        ]
-
-        if len(filtered_user_activities) == 0:
-            return None
-
-        min_time_taken = min(
-            filtered_user_activities, key=lambda ua: ua.total_time
-        ).total_time
-
-        time_taken_values = [
-            user_activity.total_time.seconds for user_activity in user_activities
-        ]
-        mean_time_taken = timedelta(seconds=mean(time_taken_values))
-        median_time_taken = timedelta(seconds=median(time_taken_values))
-
-        min_time_taken = f"{min_time_taken.seconds // 3600} hours {(min_time_taken.seconds // 60) % 60} minutes and {min_time_taken.seconds % 60} seconds"
-        mean_time_taken = f"{mean_time_taken.seconds // 3600} hours {(mean_time_taken.seconds // 60) % 60} minutes and {mean_time_taken.seconds % 60} seconds"
-        median_time_taken = f"{median_time_taken.seconds // 3600} hours {(median_time_taken.seconds // 60) % 60} minutes and {median_time_taken.seconds % 60} seconds"
-
-        return min_time_taken, mean_time_taken, median_time_taken
-
-    def guesses_count(self, form_data):
-        date = form_data["date"]
-
-        user_activities = UserActivity.objects.filter(start_time__date=date)
-        filtered_user_activities = [
-            user_activity for user_activity in user_activities if user_activity.winner
-        ]
-        if len(filtered_user_activities) == 0:
-            return None
-
-        guesses_values = [
-            user_activity.guessed_movies_count
-            for user_activity in filtered_user_activities
-        ]
-        min_guesses = min(guesses_values)
-        mean_guesses = mean(guesses_values)
-        median_guesses = median(guesses_values)
-        return min_guesses, mean_guesses, median_guesses
-
+    # Get today's analytics
     def get_today_analytics(self):
         date = datetime.today().date()
         movie = None
@@ -229,6 +141,7 @@ class AnalyticsMixin:
             "guesses_count": self.guesses_count(form_data),
         }
 
+    # Remove unnecessary fields from the form
     def remove_fields(self):
         fields_to_remove = set(AnalyticsForm.base_fields.keys()) - set(
             ["analytics_choice"]
@@ -236,7 +149,9 @@ class AnalyticsMixin:
         for field_name in fields_to_remove:
             del AnalyticsForm.base_fields[field_name]
 
+    # Add fields based on user choice
     def add_fields(self, form):
+        # Define form fields
         movie = forms.ModelMultipleChoiceField(
             label="Movies",
             queryset=Movie.objects.all().order_by("-id"),
@@ -250,6 +165,8 @@ class AnalyticsMixin:
         guesses = forms.IntegerField(
             label="Number of Guesses", min_value=0, required=False
         )
+
+        # Determine user's choice and modify the form accordingly
         choice = form.cleaned_data["analytics_choice"]
         if choice == "guess_count":
             self.remove_fields()
@@ -273,6 +190,7 @@ class AnalyticsMixin:
             self.remove_fields()
             AnalyticsForm.base_fields["date"] = date
 
+    # Get analytics data based on form input
     def get_analytics_data(self, form):
         form_data = form.cleaned_data
         choice = form_data["analytics_choice"]
@@ -322,20 +240,119 @@ class AnalyticsMixin:
 
         return res
 
+    # Calculate guess count
+    def guess_count(self, form_data):
+        movie = form_data["movie"]
+        date = form_data["date"]
+
+        if not movie:
+            return None
+
+        if not isinstance(movie, Movie):
+            movie = movie[0]
+
+        guess_count = UserActivity.objects.filter(
+            guessed_movies__id=movie.id, start_time__date=date
+        ).count()
+        return guess_count
+
+    # Calculate min and max movies
+    def min_max_movies(self, form_data, target, by):
+        if "trial" in form_data:
+            trial = form_data["trial"] - 1
+        if "date" in form_data:
+            date = form_data["date"]
+
+        if by == "trial":
+            guesses = Guess.objects.filter(order=trial)
+        elif by == "date":
+            guesses = Guess.objects.filter(user_activity__start_time__date=date)
+
+        if not guesses.exists():
+            return None
+
+        movie_idx = list(guesses.values_list("movie__id", flat=True))
+        occurences = Counter(movie_idx)
+
+        occurence = target(occurences.values())
+        movies = []
+
+        for key in occurences.keys():
+            if occurences[key] == occurence:
+                movies.append(key)
+
+        movies = list(map(lambda x: Movie.objects.get(id=x).name, movies))
+        return movies
+
+    # Calculate time taken
+    def time_taken(self, form_data):
+        date = form_data["date"]
+        guesses = form_data["guesses"]
+
+        user_activities = UserActivity.objects.filter(start_time__date=date)
+        filtered_user_activities = [
+            user_activity
+            for user_activity in user_activities
+            if user_activity.guessed_movies_count == guesses and user_activity.winner
+        ]
+
+        if len(filtered_user_activities) == 0:
+            return None
+
+        min_time_taken = min(
+            filtered_user_activities, key=lambda ua: ua.total_time
+        ).total_time
+
+        time_taken_values = [
+            user_activity.total_time.seconds for user_activity in user_activities
+        ]
+        mean_time_taken = timedelta(seconds=mean(time_taken_values))
+        median_time_taken = timedelta(seconds=median(time_taken_values))
+
+        min_time_taken = f"{min_time_taken.seconds // 3600} hours {(min_time_taken.seconds // 60) % 60} minutes and {min_time_taken.seconds % 60} seconds"
+        mean_time_taken = f"{mean_time_taken.seconds // 3600} hours {(mean_time_taken.seconds // 60) % 60} minutes and {mean_time_taken.seconds % 60} seconds"
+        median_time_taken = f"{median_time_taken.seconds // 3600} hours {(median_time_taken.seconds // 60) % 60} minutes and {median_time_taken.seconds % 60} seconds"
+
+        return min_time_taken, mean_time_taken, median_time_taken
+
+    # Calculate guesses count
+    def guesses_count(self, form_data):
+        date = form_data["date"]
+
+        user_activities = UserActivity.objects.filter(start_time__date=date)
+        filtered_user_activities = [
+            user_activity for user_activity in user_activities if user_activity.winner
+        ]
+        if len(filtered_user_activities) == 0:
+            return None
+
+        guesses_values = [
+            user_activity.guessed_movies_count
+            for user_activity in filtered_user_activities
+        ]
+        min_guesses = min(guesses_values)
+        mean_guesses = mean(guesses_values)
+        median_guesses = median(guesses_values)
+        return min_guesses, mean_guesses, median_guesses
+
 
 class ArchiveMixin:
+    # Default templates and form class for archive
     archive_change_list_template = "admin/archive/change_list_archive.html"
     archive_template_name = "admin/archive/archive.html"
     archive_form_class = ArchiveForm
 
+    # Constructor
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.change_list_template = self.archive_change_list_template
 
+    # Get model information
     def get_model_info(self):
         app_label = self.model._meta.app_label
         return (app_label, self.model._meta.model_name)
 
+    # Get URLs for archive
     def get_urls(self):
         urls = super().get_urls()
         info = self.get_model_info()
@@ -348,16 +365,19 @@ class ArchiveMixin:
         ]
         return my_urls + urls
 
+    # Bulk add archives
     def bulk_add(self, request, *args, **kwargs):
         context = {}
 
         if request.method == "POST":
             archive_form = ArchiveForm(request.POST)
             if archive_form.is_valid():
+                # Extract form data
                 date = archive_form.cleaned_data["date"]
                 movies = list(archive_form.cleaned_data["movies"])
                 movies_count = len(movies)
 
+                # Generate dates for each movie
                 dates = []
                 start_date = date
                 count = movies_count
@@ -367,8 +387,10 @@ class ArchiveMixin:
                         count -= 1
                     start_date += timedelta(days=1)
 
+                # Shuffle movies to randomize insertion order
                 random.shuffle(movies)
 
+                # Create Archive instances and bulk insert
                 instances = [
                     Archive(date=dates[idx], movie=movie)
                     for idx, movie in enumerate(movies)
@@ -376,13 +398,16 @@ class ArchiveMixin:
 
                 Archive.objects.bulk_create(instances)
 
+                # Success message
                 messages.success(
                     request, f"{movies_count} archives was added successfully."
                 )
                 return HttpResponseRedirect(reverse("admin:movie_archive_changelist"))
         else:
+            # If not a POST request, initialize form
             archive_form = ArchiveForm()
 
+        # Update context with form and other data
         context.update(self.admin_site.each_context(request))
         context.update(
             {
